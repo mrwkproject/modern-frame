@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+
+:root {
+  --background: #f7f5f0;
+  --surface: #fffdf9;
+  --foreground: #1c1917;
+  --muted: #ece8df;
+  --muted-foreground: #625d55;
+  --border: #d9d3c7;
+  --primary: #1c1917;
+  --primary-foreground: #ffffff;
+  --accent: #9a6700;
+  --success: #24734d;
+  --warning: #9a6700;
+  --destructive: #b42318;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input {
+  font: inherit;
+}
+::selection {
+  background: #e8d4a6;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.display {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.035em;
+}
+.safe-bottom {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  padding: 0.75rem 1rem;
+  color: var(--primary-foreground);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
