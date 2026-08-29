@@ -7,6 +7,7 @@ import { hashGuestToken } from '@/features/guest-sessions/token';
 import { GuestCamera } from '@/components/camera/guest-camera';
 import { CaptureHub } from '@/components/camera/capture-hub';
 import { ThreeShotBooth } from '@/components/camera/three-shot-booth';
+import { VideoBooth } from '@/components/camera/video-booth';
 import { resolveCaptureMode } from '@/features/camera/modes';
 export default async function CapturePage({
   params,
@@ -31,5 +32,7 @@ export default async function CapturePage({
     return <GuestCamera eventName={event.name} eventSlug={eventSlug} />;
   if (mode === 'booth3')
     return <ThreeShotBooth eventName={event.name} eventSlug={eventSlug} />;
+  if (mode === 'video')
+    return <VideoBooth eventName={event.name} eventSlug={eventSlug} />;
   return <CaptureHub eventName={event.name} eventSlug={eventSlug} />;
 }

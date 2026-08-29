@@ -16,7 +16,9 @@ The capture route remains a Server Component authorization boundary and renders 
 
 `src/features/frames` defines a validated, data-driven template contract, built-in system catalog, pure layout helpers, and one generic renderer. Templates declare explicit canvas dimensions, photo slots, ordered text, shapes, and borders. The renderer scales the same coordinates for a lightweight preview and a full 1080×1440 JPEG, so adding database-backed templates or other output ratios later does not require a renderer rewrite. No template or media database tables are introduced in this phase.
 
-The secure capture route now resolves an allowlisted presentation mode only after the active-event and HttpOnly guest-session checks. Its hub selects Single Photo or 3-Shot Photobooth without moving authorization client-side. Shared browser camera primitives cover stream acquisition, attachment, device counting, 3:4 extraction, and cleanup; each mode keeps its own explicit product state model.
+The secure capture route resolves an allowlisted presentation mode only after the active-event and HttpOnly guest-session checks. Its hub selects Single Photo, 3-Shot Photobooth, or Video Booth without moving authorization client-side. Shared browser camera primitives cover stream acquisition, attachment, device counting, 3:4 extraction, and cleanup; each mode keeps its own explicit product state model.
+
+Video Booth is a leaf Client Component backed by a small reducer. It reuses the camera stream primitives and uses the browser's `MediaRecorder` with runtime MIME negotiation. One recording is limited to eight seconds and remains in component-local memory as a Blob/object URL. Retake and teardown revoke obsolete URLs; visibility or navigation cleanup stops recording, timers, and tracks. There is no video database row, Storage object, upload, gallery entry, audio track, or transcoding in this foundation.
 
 Private media uses an explicit intent → signed one-object upload → server verification flow. The admin client is server-only; browser code receives only the generated upload capability. Only completed framed JPEGs can be saved, and failed event saves never block local download. Guest and host galleries receive short-lived signed read URLs rather than public object URLs.
 
@@ -34,7 +36,7 @@ Cloudflare Workers is configured through vinext, Cloudflare's current recommende
 
 - Authentication and organization onboarding: `src/features/auth`, `src/features/organizations`
 - Events and settings: `src/features/events`
-- Capture and camera adapters: `src/features/captures`
+- Capture and camera adapters: `src/features/camera`, `src/features/booth`, and `src/features/video`
 - Declarative template renderer: `src/features/frames`
 - Media/storage and galleries: `src/features/media`
 - Privileged operations: server actions or route handlers with explicit authorization and audit writes

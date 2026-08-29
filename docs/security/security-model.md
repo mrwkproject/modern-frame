@@ -47,6 +47,8 @@ Frame composition receives only the local capture, a validated built-in template
 
 Three-shot mode preserves the same server authorization boundary and receives no guest secret, token hash, event ID, or organization ID. Its allowlisted mode query is presentation state only. All three raw JPEG captures remain inside the browser; only the completed strip can be explicitly saved. No microphone, EXIF, GPS, face analysis, or device fingerprint is introduced. Replaced shots are revoked immediately, retake-all revokes the full set, and visibility/navigation cleanup cancels timers and stops media tracks.
 
+Video Booth uses the same active-event and guest-session Server Component boundary and receives only the event display name and slug. Camera acquisition explicitly uses `audio: false`; no microphone, GPS, metadata extraction, face analysis, fingerprinting, or raw-video logging is introduced. The single eight-second Blob stays in component-local browser memory and is never sent to Supabase or another service. The current JPEG-only private bucket and image schema remain unchanged. Recording, tracks, timers, chunks, and object URLs are canceled or released on replacement, visibility loss during an active camera operation, page leave, and unmount.
+
 ## Private event media
 
 `event-media` is a private, JPEG-only bucket with an 8 MiB limit. The service-role key is parsed lazily only by `src/lib/supabase/admin.ts`, which imports `server-only`. Guests have no direct table privileges. Their HttpOnly event cookie is hashed server-side and bound by database functions to the exact event, session, media row, and generated path.

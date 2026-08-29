@@ -22,7 +22,7 @@ describe('capture modes', () => {
     expect(resolveCaptureMode(undefined)).toBe('hub');
     expect(resolveCaptureMode('single')).toBe('single');
     expect(resolveCaptureMode('booth3')).toBe('booth3');
-    expect(resolveCaptureMode('video')).toBe('invalid');
+    expect(resolveCaptureMode('video')).toBe('video');
     expect(resolveCaptureMode(['single'])).toBe('invalid');
   });
 });

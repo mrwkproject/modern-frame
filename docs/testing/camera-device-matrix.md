@@ -24,3 +24,23 @@ The following scenarios remain pending on every physical device listed above: au
 For iPhone Safari, Android Chrome, Desktop Chrome, and macOS Safari where available, also verify frame preview, local single-photo download, Save to Event, strip layout/download, shared gallery display, screen rotation, navigation cleanup, and that the camera indicator stops. Record permission allow and deny separately.
 
 Repeat Save to Event on a slow network, interrupt once during upload, and interrupt once during finalize. Retry must remain understandable, keep local download available, and avoid duplicate gallery entries after an ambiguous finalize response. All of these cases remain **Pending** until executed on physical hardware.
+
+## Video Booth Foundation scenarios
+
+Video Booth is local-only, requests no microphone, limits one recording to eight seconds, and negotiates the recording container at runtime. Container and codec availability can vary by browser and OS version; never infer support from a user-agent string or rename WebM as MP4.
+
+Run the following separately on physical iPhone Safari and Android Chrome. Every item remains **Pending**:
+
+- [ ] `MediaRecorder` availability is detected without crashing.
+- [ ] Start camera from an explicit tap and confirm no microphone prompt appears.
+- [ ] Rear preview and front/rear switching work before recording.
+- [ ] Record automatically stops at eight seconds.
+- [ ] Manual Stop produces a playable preview.
+- [ ] Preview playback uses the actual recorded container.
+- [ ] Retake discards the previous clip and does not retain its object URL.
+- [ ] Download filename extension matches the actual Blob MIME type.
+- [ ] Leaving while recording safely discards the incomplete recording.
+- [ ] Hiding the page while recording safely cancels it.
+- [ ] OS camera indicator stops after leaving Video Booth.
+
+Record exact device, OS, browser version, observed MIME/container, and evidence in `docs/testing/staging-qa-report.md`. Video upload and gallery persistence are outside this foundation and must not be tested as implemented features.

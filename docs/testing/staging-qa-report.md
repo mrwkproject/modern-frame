@@ -39,6 +39,20 @@ Complete this report only with observations from the actual staging deployment a
 - [ ] Rotation/orientation remains usable
 - [ ] Camera indicator stops after leaving capture
 
+### iPhone Video Booth
+
+- [ ] `MediaRecorder` availability detected
+- [ ] Start camera without a microphone prompt
+- [ ] Rear/front switching before recording
+- [ ] Automatic stop at 8 seconds
+- [ ] Manual stop
+- [ ] Preview playback
+- [ ] Retake
+- [ ] Download with the actual container extension
+- [ ] Leave while recording
+- [ ] Camera indicator stops after leaving Video Booth
+- Observed Blob MIME/container: Pending
+
 ## Android
 
 - Model: Pending
@@ -68,6 +82,20 @@ Complete this report only with observations from the actual staging deployment a
 - [ ] Shared gallery displays both outputs
 - [ ] Rotation/orientation remains usable
 - [ ] Camera indicator stops after leaving capture
+
+### Android Video Booth
+
+- [ ] `MediaRecorder` availability detected
+- [ ] Start camera without a microphone prompt
+- [ ] Rear/front switching before recording
+- [ ] Automatic stop at 8 seconds
+- [ ] Manual stop
+- [ ] Preview playback
+- [ ] Retake
+- [ ] Download with the actual container extension
+- [ ] Leave while recording
+- [ ] Camera indicator stops after leaving Video Booth
+- Observed Blob MIME/container: Pending
 
 ## Two-device shared gallery
 

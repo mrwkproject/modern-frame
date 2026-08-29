@@ -15,8 +15,10 @@ Complete:
 - Secure guest camera with local JPEG capture and preview
 - Data-driven single-photo frames with local composition and download
 - Three-shot photobooth with review, retakes, multi-slot layouts, and local strip download
+- Private JPEG storage, secure shared event galleries, and narrow host moderation
+- Local-only eight-second Video Booth with preview, retake, and container-correct download
 
-Next: private media storage and a secure event gallery. Upload and persistent media storage are not implemented yet.
+Photo MVP code and the Video Booth foundation are complete. Production pilot readiness remains pending until staging and physical iPhone Safari and Android Chrome QA are proven. Video upload and gallery persistence are intentionally not implemented yet.
 
 ## Stack
 
@@ -111,9 +113,11 @@ The guest camera runs only after server-side event/session validation. Permissio
 
 Guests can render a captured photo through Clean Ivory, Midnight Celebration, or Warm Editorial. All templates use the same validated data model and generic Canvas renderer at an explicit 1080×1440 output size. A selected frame first renders as a lower-cost preview using identical coordinates, then exports locally as JPEG quality 0.92. Original and framed object URLs are revoked when replaced, retaken, or left.
 
-The protected capture route is a mode hub for Single Photo and 3-Shot Photobooth. The booth keeps one camera stream active through its automatic three-photo sequence, pauses briefly between shots, then stops the camera for review. Guests can replace one photo or restart all three before choosing Classic 2×6 (600×1800), Modern Story (1080×1920), or Editorial Trio (1080×1350). The generic renderer maps each photo slot to its capture through a validated zero-based slot index and loads each source only once per render.
+The protected capture route is a mode hub for Single Photo, 3-Shot Photobooth, and Video Booth. The photo booth keeps one camera stream active through its automatic three-photo sequence, pauses briefly between shots, then stops the camera for review. Guests can replace one photo or restart all three before choosing Classic 2×6 (600×1800), Modern Story (1080×1920), or Editorial Trio (1080×1350). The generic renderer maps each photo slot to its capture through a validated zero-based slot index and loads each source only once per render.
 
-Secrets belong in ignored environment files. Private media, signed URLs, guest-token controls, upload validation, and rate limiting remain requirements for later phases.
+Video Booth uses runtime `MediaRecorder` capability and MIME negotiation to create one local clip limited to eight seconds. It requests `audio: false`, never uploads the Blob, and offers local preview, retake, acceptance, and a filename extension derived from the actual recorded container. Browser recording support must still be proven on physical iPhone Safari and Android Chrome before production pilot approval.
+
+Secrets belong in ignored environment files. Private image media, signed URLs, guest-token controls, upload validation, and rate limiting remain enforced. Video persistence requires a later security and storage phase.
 
 ## UI/UX
 

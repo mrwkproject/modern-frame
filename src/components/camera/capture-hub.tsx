@@ -30,8 +30,8 @@ export function CaptureHub({
             Capture a memory.
           </h1>
           <p className="mt-3 max-w-md text-stone-300">
-            Choose one polished portrait or let the booth take three moments
-            automatically.
+            Choose one polished portrait, three automatic moments, or a short
+            local video.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <Link
@@ -60,6 +60,21 @@ export function CaptureHub({
               </span>
               <span className="mt-3 block text-sm text-stone-200">
                 Three automatic shots in a classic booth experience.
+              </span>
+            </Link>
+            <Link
+              href={`/e/${eventSlug}/capture?mode=video`}
+              className="group min-h-44 rounded-2xl border border-white/20 bg-white/5 p-6 transition-colors hover:bg-white/10 sm:col-span-2"
+            >
+              <span className="text-sm font-semibold text-amber-300">
+                Video Booth
+              </span>
+              <span className="display mt-3 block text-2xl font-semibold">
+                A short video memory
+              </span>
+              <span className="mt-3 block text-sm text-stone-300">
+                Record eight seconds, preview it, and download it to this
+                device. No microphone.
               </span>
             </Link>
           </div>
