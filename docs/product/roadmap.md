@@ -8,9 +8,10 @@
 6. Guest camera — COMPLETE
 7. Single-photo frame composition — COMPLETE
 8. Three-shot photo booth — COMPLETE
-9. Private media storage, gallery, and sharing — NEXT
-10. Video booth
-11. Live wall and guestbook
-12. Multi-event SaaS, white label, printing, AI, and enterprise integrations
+9. Private media storage, gallery, and sharing — COMPLETE
+10. MVP deployment readiness, real-device QA, edge rate limiting, cleanup scheduling, and observability — NEXT
+11. Video booth
+12. Live wall and guestbook
+13. Multi-event SaaS, white label, printing, AI, and enterprise integrations
 
 Each phase should introduce only the schema and infrastructure needed by its verified workflow.

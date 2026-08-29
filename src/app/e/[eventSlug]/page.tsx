@@ -75,6 +75,14 @@ export default async function GuestEventPage({ params }: Props) {
                 ? 'Thank you for being part of the celebration.'
                 : 'The host will open the guest experience when everything is ready.'}
             </p>
+            {isEnded ? (
+              <Link
+                href={`/e/${eventSlug}/gallery`}
+                className="mt-5 inline-flex min-h-12 items-center rounded-xl border border-white/25 px-5 font-semibold"
+              >
+                View event gallery
+              </Link>
+            ) : null}
           </div>
         )}
       </section>

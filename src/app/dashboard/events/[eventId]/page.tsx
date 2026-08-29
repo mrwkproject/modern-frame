@@ -57,12 +57,20 @@ export default async function EventDetailPage({
           </p>
         </div>
         {canManage ? (
-          <Link
-            href={`/dashboard/events/${event.id}/settings`}
-            className="inline-flex min-h-11 items-center rounded-lg border border-[var(--border)] px-5 text-sm font-semibold"
-          >
-            Event settings
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/dashboard/events/${event.id}/gallery`}
+              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--primary)] px-5 text-sm font-semibold text-white"
+            >
+              Gallery
+            </Link>
+            <Link
+              href={`/dashboard/events/${event.id}/settings`}
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--border)] px-5 text-sm font-semibold"
+            >
+              Event settings
+            </Link>
+          </div>
         ) : null}
       </div>
       <section className="mt-8 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
@@ -151,7 +159,7 @@ export default async function EventDetailPage({
           ['Guest access', 'QR and secure guest sessions enabled'],
           ['Camera', 'Single and 3-shot capture enabled'],
           ['Photo frames', 'Three system frames available'],
-          ['Gallery', 'Coming soon'],
+          ['Gallery', 'Private gallery and moderation enabled'],
         ].map(([title, detail]) => (
           <article
             key={title}

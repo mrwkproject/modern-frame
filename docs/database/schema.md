@@ -18,8 +18,14 @@ Creation requires a non-deleted active event and a lowercase 64-character SHA-25
 
 Soft deletion exists on organizations and events because recovery/audit needs are plausible. Membership rows and profiles use hard deletion through explicit foreign-key behavior. Timestamps are maintained by triggers.
 
+## Event media
+
+`event_settings` is one-to-one with an event and controls guest saves and gallery availability. Existing events are backfilled and a trigger creates defaults for every new event. `media_assets` belongs explicitly to an event and optionally retains its guest session; session deletion uses `ON DELETE SET NULL` so media ownership remains stable.
+
+Generated paths are constrained to `events/{event_id}/{media_id}.jpg`. States are `pending`, `ready`, `failed`, and `archived`; only ready, visible, non-deleted rows appear to guests. Pending intents expire after 15 minutes and have a cleanup index. `create_media_upload_intent`, `resolve_media_finalize`, and `list_guest_gallery` expose narrow guest operations. Gallery pagination is stable on `(created_at, id)` and capped at 50 rows.
+
 ## Planned, not yet created
 
-The media/capture/gallery/template modules attach to `events.organization_id` (directly or through a constrained event foreign key). `media_assets` will store private object paths and metadata—not blobs—and model original/processed lineage plus photo, video, GIF, and audio states. `event_templates` will declare canvas dimensions; `template_elements` will hold typed, positioned elements and slot indices. Audit logs arrive with the first privileged admin operation.
+Database-backed custom templates, media lineage, video, GIF, audio, and audit logs remain future work.
 
 Operational modules such as devices, print jobs, billing, moderation, analytics, rendering, and AI jobs remain intentionally absent until their workflows exist.

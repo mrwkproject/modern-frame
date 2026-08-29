@@ -13,3 +13,14 @@ export function getPublicEnv() {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   });
 }
+
+const serverEnvSchema = publicEnvSchema.extend({
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+});
+
+export function getServerEnv() {
+  return serverEnvSchema.parse({
+    ...getPublicEnv(),
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+}

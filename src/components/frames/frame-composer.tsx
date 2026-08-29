@@ -11,6 +11,7 @@ import {
   SYSTEM_FRAME_TEMPLATES,
 } from '@/features/frames/templates';
 import type { FrameTemplate, LocalComposition } from '@/features/frames/types';
+import { SaveToEvent } from '@/components/media/save-to-event';
 
 type ComposerStage = 'select' | 'composing' | 'composed';
 
@@ -210,6 +211,14 @@ export function FrameComposer({
           >
             Download photo
           </a>
+          <SaveToEvent
+            eventSlug={eventSlug}
+            blob={composition.blob}
+            width={composition.width}
+            height={composition.height}
+            captureMode="single"
+            templateId={selectedTemplate.id}
+          />
           <Link
             href={`/e/${eventSlug}`}
             className="col-span-2 inline-flex min-h-12 items-center justify-center rounded-xl px-5 font-semibold text-stone-200"

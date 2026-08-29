@@ -11,6 +11,7 @@ import {
   DEFAULT_BOOTH_TEMPLATE,
 } from '@/features/frames/templates';
 import type { FrameTemplate, LocalComposition } from '@/features/frames/types';
+import { SaveToEvent } from '@/components/media/save-to-event';
 
 function LayoutThumbnail({ template }: { template: FrameTemplate }) {
   return (
@@ -223,6 +224,14 @@ export function BoothFrameComposer({
           >
             Download strip
           </a>
+          <SaveToEvent
+            eventSlug={eventSlug}
+            blob={composition.blob}
+            width={composition.width}
+            height={composition.height}
+            captureMode="booth3"
+            templateId={selectedTemplate.id}
+          />
           <Link
             href={`/e/${eventSlug}`}
             className="col-span-2 inline-flex min-h-12 items-center justify-center rounded-xl px-5 font-semibold text-stone-200"

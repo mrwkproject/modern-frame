@@ -11,6 +11,9 @@ export type EventType =
   | 'brand_activation'
   | 'other';
 export type GuestSessionStatus = 'active' | 'revoked';
+export type MediaCaptureMode = 'single' | 'booth3';
+export type MediaAssetStatus = 'pending' | 'ready' | 'failed' | 'archived';
+export type MediaVisibility = 'visible' | 'hidden';
 
 type ProfileRow = {
   id: string;
@@ -67,6 +70,35 @@ type GuestSessionRow = {
   revoked_at: string | null;
 };
 
+type EventSettingsRow = {
+  event_id: string;
+  guest_uploads_enabled: boolean;
+  gallery_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type MediaAssetRow = {
+  id: string;
+  event_id: string;
+  guest_session_id: string | null;
+  storage_path: string;
+  media_type: 'photo';
+  capture_mode: MediaCaptureMode;
+  template_id: string;
+  mime_type: 'image/jpeg';
+  byte_size: number;
+  width: number;
+  height: number;
+  status: MediaAssetStatus;
+  visibility: MediaVisibility;
+  created_at: string;
+  updated_at: string;
+  ready_at: string | null;
+  upload_expires_at: string;
+  deleted_at: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -121,6 +153,49 @@ export type Database = {
         >;
         Relationships: [];
       };
+      event_settings: {
+        Row: EventSettingsRow;
+        Insert: Pick<EventSettingsRow, 'event_id'> &
+          Partial<Omit<EventSettingsRow, 'event_id'>>;
+        Update: Partial<
+          Pick<EventSettingsRow, 'guest_uploads_enabled' | 'gallery_enabled'>
+        >;
+        Relationships: [];
+      };
+      media_assets: {
+        Row: MediaAssetRow;
+        Insert: Pick<
+          MediaAssetRow,
+          | 'event_id'
+          | 'storage_path'
+          | 'capture_mode'
+          | 'template_id'
+          | 'mime_type'
+          | 'byte_size'
+          | 'width'
+          | 'height'
+        > &
+          Partial<
+            Omit<
+              MediaAssetRow,
+              | 'event_id'
+              | 'storage_path'
+              | 'capture_mode'
+              | 'template_id'
+              | 'mime_type'
+              | 'byte_size'
+              | 'width'
+              | 'height'
+            >
+          >;
+        Update: Partial<
+          Pick<
+            MediaAssetRow,
+            'status' | 'visibility' | 'ready_at' | 'deleted_at'
+          >
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -148,12 +223,72 @@ export type Database = {
         Args: { event_slug: string; guest_token_hash: string };
         Returns: Array<{ valid: boolean; expires_at: string | null }>;
       };
+      create_media_upload_intent: {
+        Args: {
+          event_slug: string;
+          guest_token_hash: string;
+          requested_capture_mode: string;
+          requested_template_id: string;
+          requested_mime_type: string;
+          requested_byte_size: number;
+          requested_width: number;
+          requested_height: number;
+        };
+        Returns: Array<{
+          media_id: string;
+          storage_path: string;
+          upload_expires_at: string;
+        }>;
+      };
+      resolve_media_finalize: {
+        Args: {
+          event_slug: string;
+          guest_token_hash: string;
+          requested_media_id: string;
+        };
+        Returns: Array<{
+          media_id: string;
+          storage_path: string;
+          expected_byte_size: number;
+          expected_mime_type: string;
+        }>;
+      };
+      list_guest_gallery: {
+        Args: {
+          event_slug: string;
+          guest_token_hash: string;
+          cursor_created_at?: string | null;
+          cursor_id?: string | null;
+          page_size?: number;
+        };
+        Returns: Array<{
+          id: string;
+          storage_path: string;
+          capture_mode: MediaCaptureMode;
+          template_id: string;
+          width: number;
+          height: number;
+          created_at: string;
+        }>;
+      };
+      validate_guest_gallery_session: {
+        Args: { event_slug: string; guest_token_hash: string };
+        Returns: Array<{
+          valid: boolean;
+          event_status: EventStatus;
+          guest_uploads_enabled: boolean;
+          gallery_enabled: boolean;
+        }>;
+      };
     };
     Enums: {
       organization_role: OrganizationRole;
       event_status: EventStatus;
       event_type: EventType;
       guest_session_status: GuestSessionStatus;
+      media_capture_mode: MediaCaptureMode;
+      media_asset_status: MediaAssetStatus;
+      media_visibility: MediaVisibility;
     };
     CompositeTypes: Record<string, never>;
   };

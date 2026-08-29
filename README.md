@@ -53,7 +53,7 @@ Use [`.env.example`](./.env.example) as the source of required names:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY` (reserved for future privileged server-only workflows)
+- `SUPABASE_SERVICE_ROLE_KEY` (required by private media signing and verification on the server)
 
 The anon key is intentionally public and constrained by RLS. A service-role key must never be prefixed with `NEXT_PUBLIC_`, imported by client code, or committed.
 
