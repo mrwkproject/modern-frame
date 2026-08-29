@@ -148,9 +148,9 @@ export default async function EventDetailPage({
         aria-label="Upcoming event modules"
       >
         {[
-          ['Guest sessions', 'Available in Prompt 03'],
-          ['Camera & frames', 'Available in Prompts 04–06'],
-          ['Gallery', 'Available in Prompt 07'],
+          ['Guest access', 'QR and secure guest sessions enabled'],
+          ['Camera', 'Guest photo capture enabled'],
+          ['Frames & gallery', 'Coming soon'],
         ].map(([title, detail]) => (
           <article
             key={title}

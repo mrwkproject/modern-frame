@@ -38,3 +38,7 @@ The pgTAP suite uses real authenticated and anonymous database roles to verify p
 QR codes carry only the absolute event join URL—never IDs, credentials, storage paths, or guest secrets. The join route generates 256 bits with Web Crypto, hashes the secret with SHA-256, and sends only the hash to a narrow creation RPC. The raw secret exists only transiently on the server and in an HttpOnly, SameSite=Lax cookie scoped to `/e/[eventSlug]`; it never appears in URLs, browser storage, application logs, or PostgreSQL.
 
 Direct `guest_sessions` access is revoked from anonymous and authenticated roles. Creation and validation functions enforce active event status, non-deletion, hash format, expiration, revocation, and exact event binding. No email, phone, IP, user-agent, location, advertising ID, or persistent device fingerprint is collected. Production launch still requires rate limiting at the join route/server boundary; the narrow RPC makes that control straightforward to add without broad table access.
+
+## Local camera privacy
+
+The server validates the active event and guest-session cookie before camera code renders. The raw guest token is read only by the Server Component and is never passed into the camera Client Component. Camera access is explicit, video-only, and local. Frames are extracted with Canvas into one in-memory JPEG Blob; no photo, Blob, EXIF, GPS, face data, camera identifier, or microphone input is sent to Modern Frame. Stream tracks, countdown timers, flash timers, and object URLs are released on replacement or teardown.
