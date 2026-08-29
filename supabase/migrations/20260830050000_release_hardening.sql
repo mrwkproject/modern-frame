@@ -153,7 +153,7 @@ returns table (allowed boolean, retry_after_seconds integer)
 language plpgsql security definer set search_path = '' as $$
 declare
   current_row private.join_rate_limits%rowtype;
-  current_time timestamptz := statement_timestamp();
+  request_time timestamptz := statement_timestamp();
 begin
   if requested_scope !~ '^[a-z0-9_-]{1,50}$' or requested_key_hash !~ '^[0-9a-f]{64}$'
     or window_seconds not between 60 and 3600 or max_attempts not between 1 and 100 then
@@ -161,19 +161,19 @@ begin
   end if;
 
   insert into private.join_rate_limits (scope, key_hash, window_started_at, count)
-  values (requested_scope, requested_key_hash, current_time, 1)
+  values (requested_scope, requested_key_hash, request_time, 1)
   on conflict (scope, key_hash) do update set
     window_started_at = case
-      when private.join_rate_limits.window_started_at + make_interval(secs => window_seconds) <= current_time then current_time
+      when private.join_rate_limits.window_started_at + make_interval(secs => window_seconds) <= request_time then request_time
       else private.join_rate_limits.window_started_at end,
     count = case
-      when private.join_rate_limits.window_started_at + make_interval(secs => window_seconds) <= current_time then 1
+      when private.join_rate_limits.window_started_at + make_interval(secs => window_seconds) <= request_time then 1
       else private.join_rate_limits.count + 1 end
   returning * into current_row;
 
   return query select
     current_row.count <= max_attempts,
-    case when current_row.count <= max_attempts then 0 else greatest(1, ceil(extract(epoch from (current_row.window_started_at + make_interval(secs => window_seconds) - current_time)))::integer) end;
+    case when current_row.count <= max_attempts then 0 else greatest(1, ceil(extract(epoch from (current_row.window_started_at + make_interval(secs => window_seconds) - request_time)))::integer) end;
 end; $$;
 
 revoke all on function public.consume_join_rate_limit(text,text,integer,integer) from public;
