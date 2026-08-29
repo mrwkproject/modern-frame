@@ -7,3 +7,18 @@ The public Supabase anon key may be shipped to browsers because RLS constrains i
 Media buckets must be private by default. Store randomized object paths, validate actual MIME signatures and size server-side, constrain allowed formats, and issue short-lived signed URLs. Guest access will use high-entropy, revocable tokens; event slugs alone are not authorization.
 
 Before public capture launches, add per-IP/token rate limits, upload quotas, CSRF review for cookie-authenticated mutations, content-security headers, abuse reporting, and storage RLS. Render user text as text, never unsanitized HTML. Logs and user-facing errors must not expose secrets, tokens, storage paths, or raw database errors.
+
+## Authentication and onboarding verification
+
+The Next.js proxy refreshes Supabase cookies but does not grant access. Protected layouts and every Server Action verify the user with Supabase Auth. Organization creation accepts only a name; the action derives `created_by` from the verified session and generates the slug. The existing organization insert policy requires `created_by = auth.uid()`, and the database trigger creates the owner membership in the same PostgreSQL transaction.
+
+| Case                                                | Enforcement                                                                                                 |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| User A reads Organization A                         | `organizations_select_members` calls `private.is_org_member` with User A's JWT identity.                    |
+| User A reads Organization B                         | No matching membership exists, so RLS returns no row.                                                       |
+| User B modifies Organization A                      | Update requires owner/admin membership in Organization A.                                                   |
+| Anonymous reads private organizations               | Policies apply only to `authenticated`; anonymous reads return no rows.                                     |
+| User assigns ownership in an unrelated organization | Membership inserts require `private.is_org_owner` for the target organization.                              |
+| User forges onboarding organization/role IDs        | The form accepts no IDs or role. The server derives the user ID, and the trigger fixes the role to `owner`. |
+
+These guarantees should also be exercised against a local Supabase instance before production deployment; unit tests cover application redirect and membership decision helpers without pretending to replace database-level RLS tests.

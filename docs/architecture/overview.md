@@ -20,3 +20,7 @@ Keep request handlers Web-standard and isolate provider APIs. Avoid long-running
 - Declarative template renderer: `src/features/templates`
 - Media/storage and galleries: `src/features/media`, `src/features/gallery`
 - Privileged operations: server actions or route handlers with explicit authorization and audit writes
+
+## Authentication boundary
+
+`src/proxy.ts` refreshes Supabase session cookies for auth and host routes. It is not an authorization boundary. Server Components protect host routes, Server Actions re-verify the authenticated user, and PostgreSQL RLS remains authoritative for tenant data. Auth and organization behavior live in their respective `src/features` domains.

@@ -1,20 +1,16 @@
 import { redirect } from 'next/navigation';
 import { Wordmark } from '@/components/brand/wordmark';
 import { AuthForm } from '@/components/forms/auth-form';
-import { loginAction } from '@/features/auth/actions';
+import { registerAction } from '@/features/auth/actions';
 import { decideHostDestination } from '@/features/auth/decisions';
 import {
   getCurrentUser,
   getPrimaryOrganization,
 } from '@/features/organizations/queries';
 
-export const metadata = { title: 'Log in' };
+export const metadata = { title: 'Create account' };
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ message?: string }>;
-}) {
+export default async function RegisterPage() {
   const user = await getCurrentUser();
   if (user) {
     let hasMembership = false;
@@ -26,24 +22,17 @@ export default async function LoginPage({
     redirect(decideHostDestination({ authenticated: true, hasMembership }));
   }
 
-  const { message } = await searchParams;
   return (
     <main className="grid min-h-svh place-items-center px-5 py-10">
       <section className="w-full max-w-md rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 sm:p-8">
         <Wordmark />
-        <h1 className="display mt-10 text-4xl font-semibold">Welcome back</h1>
+        <h1 className="display mt-10 text-4xl font-semibold">
+          Create your account
+        </h1>
         <p className="mt-2 text-[var(--muted-foreground)]">
-          Sign in to manage your events and workspace.
+          Start with a simple workspace. Your first event comes next.
         </p>
-        {message ? (
-          <p
-            role="status"
-            className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
-          >
-            {message}
-          </p>
-        ) : null}
-        <AuthForm action={loginAction} mode="login" />
+        <AuthForm action={registerAction} mode="register" />
       </section>
     </main>
   );

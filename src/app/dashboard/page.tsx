@@ -1,5 +1,3 @@
-import { ButtonLink } from '@/components/ui/button';
-
 export const metadata = { title: 'Dashboard' };
 
 export default function DashboardPage() {
@@ -14,7 +12,13 @@ export default function DashboardPage() {
             Good afternoon.
           </h1>
         </div>
-        <ButtonLink href="/dashboard/events">Create event</ButtonLink>
+        <span
+          aria-disabled="true"
+          className="inline-flex min-h-11 cursor-not-allowed items-center rounded-[var(--radius-sm)] bg-stone-300 px-5 py-2.5 text-sm font-semibold text-stone-600"
+          title="Event creation arrives in Prompt 02"
+        >
+          Create event soon
+        </span>
       </div>
       <section
         className="mt-10 grid gap-4 sm:grid-cols-3"
@@ -39,8 +43,8 @@ export default function DashboardPage() {
           Your first event starts here
         </h2>
         <p className="mx-auto mt-2 max-w-md text-[var(--muted-foreground)]">
-          Event creation will be enabled after authentication and organization
-          onboarding are connected.
+          Your workspace is ready. Event creation arrives in the next product
+          phase.
         </p>
       </section>
     </div>
