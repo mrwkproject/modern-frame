@@ -21,7 +21,7 @@ insert into public.guest_sessions (id,event_id,token_hash,expires_at) values
 
 select is((select public from storage.buckets where id='event-media'), false, 'Event media bucket is private');
 select is((select file_size_limit from storage.buckets where id='event-media'), 8388608::bigint, 'Bucket enforces the 8 MiB limit');
-select results_eq($$select gallery_enabled from public.event_settings where event_id='7a100000-0000-0000-0000-000000000001'$$,$$values(true)$$,'New events receive default settings');
+select is((select gallery_enabled from public.event_settings where event_id='7a100000-0000-0000-0000-000000000001'),true,'New events receive default settings');
 
 set local role anon;
 select throws_ok($$select * from public.media_assets$$,'42501','permission denied for table media_assets','Anon cannot select media rows');
@@ -58,7 +58,7 @@ insert into public.media_assets(id,event_id,guest_session_id,storage_path,captur
 
 set local role anon;
 select is((select count(*) from public.list_guest_gallery('media-active-a-test',repeat('a',64),null,null,30)),1::bigint,'Gallery returns only ready visible media');
-select results_eq($$select valid from public.validate_guest_gallery_session('media-ended-a-test',repeat('b',64))$$,$$values(true)$$,'Ended event gallery remains available to an existing session');
+select is((select valid from public.validate_guest_gallery_session('media-ended-a-test',repeat('b',64))),true,'Ended event gallery remains available to an existing session');
 select is_empty($$select * from public.list_guest_gallery('media-active-b-test',repeat('a',64),null,null,30)$$,'Gallery token cannot cross events');
 select is_empty($$select * from public.resolve_media_finalize('media-active-b-test',repeat('a',64),'7a120000-0000-0000-0000-000000000001')$$,'Guest cannot finalize another event media row');
 
