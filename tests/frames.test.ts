@@ -5,8 +5,26 @@ import {
   fitTextLines,
   scaleFrameRect,
 } from '@/features/frames/helpers';
-import { validateFrameTemplate } from '@/features/frames/schema';
-import { SYSTEM_FRAME_TEMPLATES } from '@/features/frames/templates';
+import {
+  validateBoothTemplate,
+  validateFrameTemplate,
+} from '@/features/frames/schema';
+import {
+  BOOTH_FRAME_TEMPLATES,
+  SYSTEM_FRAME_TEMPLATES,
+} from '@/features/frames/templates';
+import { resolveFrameCaptures } from '@/features/frames/renderer';
+import type { LocalCapture } from '@/features/camera/types';
+
+function capture(index: number): LocalCapture {
+  return {
+    blob: new Blob([`${index}`], { type: 'image/jpeg' }),
+    objectUrl: `blob:photo-${index}`,
+    width: 900,
+    height: 1200,
+    mimeType: 'image/jpeg',
+  };
+}
 
 describe('system frame templates', () => {
   it('validates every built-in template at 1080 by 1440', () => {
@@ -15,7 +33,50 @@ describe('system frame templates', () => {
       expect(validateFrameTemplate(template)).toEqual(template);
       expect(template.canvas).toEqual({ width: 1080, height: 1440 });
       expect(template.photoSlots).toHaveLength(1);
+      expect(template.photoSlots[0]!.slotIndex).toBe(0);
     }
+  });
+
+  it('validates three booth layouts and their explicit slot mapping', () => {
+    expect(BOOTH_FRAME_TEMPLATES).toHaveLength(3);
+    for (const template of BOOTH_FRAME_TEMPLATES) {
+      expect(validateBoothTemplate(template)).toEqual(template);
+      expect(template.photoSlots.map((slot) => slot.slotIndex)).toEqual([
+        0, 1, 2,
+      ]);
+    }
+    expect(BOOTH_FRAME_TEMPLATES[0]!.canvas).toEqual({
+      width: 600,
+      height: 1800,
+    });
+  });
+
+  it('rejects a negative slot index', () => {
+    const invalid = structuredClone(BOOTH_FRAME_TEMPLATES[0]!);
+    invalid.photoSlots[0]!.slotIndex = -1;
+    expect(() => validateFrameTemplate(invalid)).toThrow();
+  });
+
+  it('rejects booth layouts without the exact 0, 1, 2 slot mapping', () => {
+    const invalid = structuredClone(BOOTH_FRAME_TEMPLATES[0]!);
+    invalid.photoSlots[2]!.slotIndex = 1;
+    expect(() => validateBoothTemplate(invalid)).toThrow(
+      'BOOTH_TEMPLATE_REQUIRES_SLOTS_0_1_2',
+    );
+  });
+
+  it('maps captures 0, 1, and 2 and rejects a missing required capture', () => {
+    const captures = [capture(0), capture(1), capture(2)];
+    const resolved = resolveFrameCaptures(captures, BOOTH_FRAME_TEMPLATES[0]!);
+    expect(resolved.get(0)).toBe(captures[0]);
+    expect(resolved.get(1)).toBe(captures[1]);
+    expect(resolved.get(2)).toBe(captures[2]);
+    expect(() =>
+      resolveFrameCaptures(captures.slice(0, 2), BOOTH_FRAME_TEMPLATES[0]!),
+    ).toThrow('MISSING_CAPTURE_FOR_SLOT_2');
+    expect(
+      resolveFrameCaptures([captures[0]!], SYSTEM_FRAME_TEMPLATES[0]!).get(0),
+    ).toBe(captures[0]);
   });
 
   it('rejects elements outside the composition canvas', () => {

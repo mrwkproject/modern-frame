@@ -16,6 +16,10 @@ The capture route remains a Server Component authorization boundary and renders 
 
 `src/features/frames` defines a validated, data-driven template contract, built-in system catalog, pure layout helpers, and one generic renderer. Templates declare explicit canvas dimensions, photo slots, ordered text, shapes, and borders. The renderer scales the same coordinates for a lightweight preview and a full 1080×1440 JPEG, so adding database-backed templates or other output ratios later does not require a renderer rewrite. No template or media database tables are introduced in this phase.
 
+The secure capture route now resolves an allowlisted presentation mode only after the active-event and HttpOnly guest-session checks. Its hub selects Single Photo or 3-Shot Photobooth without moving authorization client-side. Shared browser camera primitives cover stream acquisition, attachment, device counting, 3:4 extraction, and cleanup; each mode keeps its own explicit product state model.
+
+Frame photo slots carry a validated non-negative `slotIndex`. The renderer accepts an ordered capture array, rejects any missing required capture, and caches decoded sources within each render operation. Single frames resolve index 0; booth layouts resolve indices 0, 1, and 2 through the same engine. The booth holds one stream across its automatic sequence, stops after shot three, and composes only the selected layout at full resolution.
+
 ## Deployment
 
 Keep request handlers Web-standard and isolate provider APIs. Avoid long-running servers and native Node dependencies so a Cloudflare-compatible adapter can be selected when deployment is configured. Media processing should start client-side; asynchronous video/AI jobs remain future modules.

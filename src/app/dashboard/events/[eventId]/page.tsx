@@ -149,7 +149,7 @@ export default async function EventDetailPage({
       >
         {[
           ['Guest access', 'QR and secure guest sessions enabled'],
-          ['Camera', 'Guest photo capture enabled'],
+          ['Camera', 'Single and 3-shot capture enabled'],
           ['Photo frames', 'Three system frames available'],
           ['Gallery', 'Coming soon'],
         ].map(([title, detail]) => (

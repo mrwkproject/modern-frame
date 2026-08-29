@@ -18,6 +18,36 @@ type RenderOptions = {
   quality?: number;
 };
 
+type RenderFrameInput = {
+  captures: readonly LocalCapture[];
+  template: FrameTemplate;
+  content: CompositionContent;
+  options?: RenderOptions;
+};
+
+export function resolveCaptureForSlot(
+  captures: readonly LocalCapture[],
+  slotIndex: number,
+) {
+  const capture = captures[slotIndex];
+  if (!capture) throw new Error(`MISSING_CAPTURE_FOR_SLOT_${slotIndex}`);
+  return capture;
+}
+
+export function resolveFrameCaptures(
+  captures: readonly LocalCapture[],
+  template: FrameTemplate,
+) {
+  const resolved = new Map<number, LocalCapture>();
+  for (const slot of template.photoSlots) {
+    resolved.set(
+      slot.slotIndex,
+      resolveCaptureForSlot(captures, slot.slotIndex),
+    );
+  }
+  return resolved;
+}
+
 function loadLocalImage(source: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
@@ -174,11 +204,10 @@ function drawElement(
 }
 
 export async function renderFrameComposition(
-  capture: LocalCapture,
-  template: FrameTemplate,
-  content: CompositionContent,
-  options: RenderOptions = {},
+  input: RenderFrameInput,
 ): Promise<LocalComposition> {
+  const { captures, template, content, options = {} } = input;
+  const requiredCaptures = resolveFrameCaptures(captures, template);
   const outputWidth = options.outputWidth ?? template.canvas.width;
   const scale = outputWidth / template.canvas.width;
   const outputHeight = Math.round(template.canvas.height * scale);
@@ -193,7 +222,17 @@ export async function renderFrameComposition(
   context.fillStyle = template.background.color;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  const image = await loadLocalImage(capture.objectUrl);
+  const imageBySlot = new Map<number, HTMLImageElement>();
+  const imageBySource = new Map<string, Promise<HTMLImageElement>>();
+  await Promise.all(
+    [...requiredCaptures].map(async ([slotIndex, capture]) => {
+      const pendingImage =
+        imageBySource.get(capture.objectUrl) ??
+        loadLocalImage(capture.objectUrl);
+      imageBySource.set(capture.objectUrl, pendingImage);
+      imageBySlot.set(slotIndex, await pendingImage);
+    }),
+  );
   const drawables = [
     ...template.photoSlots.map((slot) => ({
       kind: 'slot' as const,
@@ -205,9 +244,12 @@ export async function renderFrameComposition(
     })),
   ].sort((first, second) => first.value.zIndex - second.value.zIndex);
   for (const drawable of drawables) {
-    if (drawable.kind === 'slot')
+    if (drawable.kind === 'slot') {
+      const image = imageBySlot.get(drawable.value.slotIndex);
+      if (!image)
+        throw new Error(`MISSING_CAPTURE_FOR_SLOT_${drawable.value.slotIndex}`);
       drawPhotoSlot(context, image, drawable.value, scale);
-    else drawElement(context, drawable.value, content, scale);
+    } else drawElement(context, drawable.value, content, scale);
   }
 
   const quality = options.quality ?? 0.92;

@@ -10,6 +10,7 @@ export type FrameRect = {
 export type FramePhotoSlot = FrameRect & {
   id: string;
   kind: 'photo';
+  slotIndex: number;
   cornerRadius?: number;
 };
 

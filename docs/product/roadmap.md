@@ -7,8 +7,8 @@
 5. QR and guest sessions — COMPLETE
 6. Guest camera — COMPLETE
 7. Single-photo frame composition — COMPLETE
-8. Three-shot photo booth — NEXT
-9. Gallery and sharing
+8. Three-shot photo booth — COMPLETE
+9. Private media storage, gallery, and sharing — NEXT
 10. Video booth
 11. Live wall and guestbook
 12. Multi-event SaaS, white label, printing, AI, and enterprise integrations

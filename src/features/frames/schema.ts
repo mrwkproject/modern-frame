@@ -15,6 +15,7 @@ const rectSchema = z.object({
 const photoSlotSchema = rectSchema.extend({
   id: z.string().min(1),
   kind: z.literal('photo'),
+  slotIndex: z.number().int().nonnegative(),
   cornerRadius: z.number().nonnegative().optional(),
 });
 
@@ -85,4 +86,18 @@ const templateSchema = z
 
 export function validateFrameTemplate(template: unknown): FrameTemplate {
   return templateSchema.parse(template) as FrameTemplate;
+}
+
+export function validateBoothTemplate(template: unknown): FrameTemplate {
+  const validated = validateFrameTemplate(template);
+  const slotIndices = validated.photoSlots
+    .map((slot) => slot.slotIndex)
+    .sort((first, second) => first - second);
+  if (
+    slotIndices.length !== 3 ||
+    slotIndices.some((slotIndex, index) => slotIndex !== index)
+  ) {
+    throw new Error('BOOTH_TEMPLATE_REQUIRES_SLOTS_0_1_2');
+  }
+  return validated;
 }

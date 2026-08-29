@@ -14,8 +14,9 @@ Complete:
 - Event QR access and anonymous, event-scoped guest sessions
 - Secure guest camera with local JPEG capture and preview
 - Data-driven single-photo frames with local composition and download
+- Three-shot photobooth with review, retakes, multi-slot layouts, and local strip download
 
-Next: three-shot photobooth and multi-slot composition, followed by gallery workflows. Upload and media storage are not implemented yet.
+Next: private media storage and a secure event gallery. Upload and persistent media storage are not implemented yet.
 
 ## Stack
 
@@ -102,6 +103,8 @@ Event QR codes contain only `/e/[eventSlug]/join`. Joining an active event creat
 The guest camera runs only after server-side event/session validation. Permission begins from an explicit guest action, requests video with `audio: false`, and releases tracks on navigation or unmount. Captured JPEGs remain in browser memory and are not uploaded or stored by Modern Frame. Phone testing requires HTTPS; localhost is accepted for development.
 
 Guests can render a captured photo through Clean Ivory, Midnight Celebration, or Warm Editorial. All templates use the same validated data model and generic Canvas renderer at an explicit 1080×1440 output size. A selected frame first renders as a lower-cost preview using identical coordinates, then exports locally as JPEG quality 0.92. Original and framed object URLs are revoked when replaced, retaken, or left.
+
+The protected capture route is a mode hub for Single Photo and 3-Shot Photobooth. The booth keeps one camera stream active through its automatic three-photo sequence, pauses briefly between shots, then stops the camera for review. Guests can replace one photo or restart all three before choosing Classic 2×6 (600×1800), Modern Story (1080×1920), or Editorial Trio (1080×1350). The generic renderer maps each photo slot to its capture through a validated zero-based slot index and loads each source only once per render.
 
 Secrets belong in ignored environment files. Private media, signed URLs, guest-token controls, upload validation, and rate limiting remain requirements for later phases.
 

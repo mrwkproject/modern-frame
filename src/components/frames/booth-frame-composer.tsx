@@ -7,118 +7,120 @@ import type { LocalCapture } from '@/features/camera/types';
 import { createPhotoFilename } from '@/features/frames/helpers';
 import { renderFrameComposition } from '@/features/frames/renderer';
 import {
-  DEFAULT_FRAME_TEMPLATE,
-  SYSTEM_FRAME_TEMPLATES,
+  BOOTH_FRAME_TEMPLATES,
+  DEFAULT_BOOTH_TEMPLATE,
 } from '@/features/frames/templates';
 import type { FrameTemplate, LocalComposition } from '@/features/frames/types';
 
-type ComposerStage = 'select' | 'composing' | 'composed';
-
-function TemplateThumbnail({ template }: { template: FrameTemplate }) {
-  const slot = template.photoSlots[0]!;
+function LayoutThumbnail({ template }: { template: FrameTemplate }) {
   return (
     <span
-      className="relative block aspect-[3/4] w-full overflow-hidden rounded-md"
+      className="relative block h-28 w-full overflow-hidden rounded-md"
       style={{ backgroundColor: template.background.color }}
       aria-hidden="true"
     >
-      <span
-        className="absolute bg-stone-400"
-        style={{
-          left: `${(slot.x / template.canvas.width) * 100}%`,
-          top: `${(slot.y / template.canvas.height) * 100}%`,
-          width: `${(slot.width / template.canvas.width) * 100}%`,
-          height: `${(slot.height / template.canvas.height) * 100}%`,
-        }}
-      />
+      {template.photoSlots.map((slot) => (
+        <span
+          key={slot.id}
+          className="absolute bg-stone-400"
+          style={{
+            left: `${(slot.x / template.canvas.width) * 100}%`,
+            top: `${(slot.y / template.canvas.height) * 100}%`,
+            width: `${(slot.width / template.canvas.width) * 100}%`,
+            height: `${(slot.height / template.canvas.height) * 100}%`,
+          }}
+        />
+      ))}
     </span>
   );
 }
 
-export function FrameComposer({
-  capture,
+export function BoothFrameComposer({
+  captures,
   eventName,
   eventSlug,
-  onRetake,
+  onReview,
+  onRetakeAll,
 }: {
-  capture: LocalCapture;
+  captures: readonly LocalCapture[];
   eventName: string;
   eventSlug: string;
-  onRetake: () => void;
+  onReview: () => void;
+  onRetakeAll: () => void;
 }) {
-  const [selectedId, setSelectedId] = useState(DEFAULT_FRAME_TEMPLATE.id);
+  const [selectedId, setSelectedId] = useState(DEFAULT_BOOTH_TEMPLATE.id);
   const [preview, setPreview] = useState<LocalComposition | null>(null);
   const [composition, setComposition] = useState<LocalComposition | null>(null);
-  const [stage, setStage] = useState<ComposerStage>('select');
+  const [stage, setStage] = useState<'select' | 'composing' | 'composed'>(
+    'select',
+  );
   const [previewRevision, setPreviewRevision] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const previewRef = useRef<LocalComposition | null>(null);
   const compositionRef = useRef<LocalComposition | null>(null);
+  const operationVersionRef = useRef(0);
   const operationRef = useRef(false);
-  const compositionVersionRef = useRef(0);
   const mountedRef = useRef(true);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const selectedTemplate =
-    SYSTEM_FRAME_TEMPLATES.find((template) => template.id === selectedId) ??
-    DEFAULT_FRAME_TEMPLATE;
+    BOOTH_FRAME_TEMPLATES.find((template) => template.id === selectedId) ??
+    DEFAULT_BOOTH_TEMPLATE;
 
   const replacePreview = useCallback((next: LocalComposition | null) => {
-    setPreview((current) => {
-      if (current && current.objectUrl !== next?.objectUrl) {
-        URL.revokeObjectURL(current.objectUrl);
-      }
-      return next;
-    });
+    if (
+      previewRef.current &&
+      previewRef.current.objectUrl !== next?.objectUrl
+    ) {
+      URL.revokeObjectURL(previewRef.current.objectUrl);
+    }
     previewRef.current = next;
+    setPreview(next);
   }, []);
 
   const replaceComposition = useCallback((next: LocalComposition | null) => {
-    setComposition((current) => {
-      if (current && current.objectUrl !== next?.objectUrl) {
-        URL.revokeObjectURL(current.objectUrl);
-      }
-      return next;
-    });
+    if (
+      compositionRef.current &&
+      compositionRef.current.objectUrl !== next?.objectUrl
+    ) {
+      URL.revokeObjectURL(compositionRef.current.objectUrl);
+    }
     compositionRef.current = next;
+    setComposition(next);
   }, []);
 
   useEffect(() => {
     let active = true;
     void renderFrameComposition({
-      captures: [capture],
+      captures,
       template: selectedTemplate,
       content: { eventName },
-      options: { outputWidth: 360, quality: 0.82 },
+      options: { outputWidth: 240, quality: 0.82 },
     })
       .then((result) => {
-        if (!active) {
-          URL.revokeObjectURL(result.objectUrl);
-          return;
-        }
+        if (!active) return URL.revokeObjectURL(result.objectUrl);
         replacePreview(result);
       })
       .catch(() => {
         if (active) {
           replacePreview(null);
-          setError("We couldn't prepare this frame. Choose it again to retry.");
+          setError(
+            "We couldn't prepare this layout. Select it again to retry.",
+          );
         }
       });
     return () => {
       active = false;
     };
-  }, [capture, eventName, previewRevision, replacePreview, selectedTemplate]);
+  }, [captures, eventName, previewRevision, replacePreview, selectedTemplate]);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      compositionVersionRef.current += 1;
-      if (previewRef.current) {
-        URL.revokeObjectURL(previewRef.current.objectUrl);
-      }
-      if (compositionRef.current) {
+      operationVersionRef.current += 1;
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current.objectUrl);
+      if (compositionRef.current)
         URL.revokeObjectURL(compositionRef.current.objectUrl);
-      }
     };
   }, []);
 
@@ -126,22 +128,19 @@ export function FrameComposer({
     if (stage === 'composed') headingRef.current?.focus();
   }, [stage]);
 
-  const createComposition = async () => {
-    if (operationRef.current || !preview) return;
+  const compose = async () => {
+    if (!preview || operationRef.current) return;
     operationRef.current = true;
-    const operationVersion = ++compositionVersionRef.current;
-    setError(null);
+    const version = ++operationVersionRef.current;
     setStage('composing');
+    setError(null);
     try {
       const result = await renderFrameComposition({
-        captures: [capture],
+        captures,
         template: selectedTemplate,
         content: { eventName },
       });
-      if (
-        !mountedRef.current ||
-        operationVersion !== compositionVersionRef.current
-      ) {
+      if (!mountedRef.current || version !== operationVersionRef.current) {
         URL.revokeObjectURL(result.objectUrl);
         return;
       }
@@ -149,19 +148,18 @@ export function FrameComposer({
       replaceComposition(result);
       setStage('composed');
     } catch {
-      setError("We couldn't finish your framed photo. Please try again.");
+      setError("We couldn't finish your photo strip. Please try again.");
       setStage('select');
     } finally {
       operationRef.current = false;
     }
   };
 
-  const retake = () => {
-    compositionVersionRef.current += 1;
-    operationRef.current = false;
+  const returnToReview = () => {
+    operationVersionRef.current += 1;
     replacePreview(null);
     replaceComposition(null);
-    onRetake();
+    onReview();
   };
 
   if (stage === 'composed' && composition) {
@@ -169,16 +167,21 @@ export function FrameComposer({
       <section className="flex min-h-0 flex-1 flex-col py-3">
         <div className="mb-4 text-center" aria-live="polite">
           <h1 ref={headingRef} tabIndex={-1} className="display text-3xl">
-            Your framed photo is ready.
+            Your photo strip is ready.
           </h1>
           <p className="mt-2 text-sm text-stone-300">
-            Saved only on this device when you download it.
+            Download it to save it on this device.
           </p>
         </div>
-        <div className="relative mx-auto aspect-[3/4] max-h-[58svh] min-h-0 w-full flex-1 overflow-hidden rounded-2xl bg-black">
+        <div
+          className="relative mx-auto max-h-[54svh] min-h-0 w-full flex-1 overflow-hidden rounded-2xl bg-black"
+          style={{
+            aspectRatio: `${composition.width} / ${composition.height}`,
+          }}
+        >
           <Image
             src={composition.objectUrl}
-            alt={`Your photo in the ${selectedTemplate.name} frame`}
+            alt={`Your three photos in the ${selectedTemplate.name} layout`}
             fill
             unoptimized
             className="object-contain"
@@ -194,21 +197,31 @@ export function FrameComposer({
             }}
             className="min-h-12 rounded-xl border border-white/30 px-4 font-semibold"
           >
-            Change frame
+            Change layout
           </button>
           <button
             type="button"
-            onClick={retake}
+            onClick={returnToReview}
             className="min-h-12 rounded-xl border border-white/30 px-4 font-semibold"
           >
-            Retake
+            Retake a photo
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              replaceComposition(null);
+              onRetakeAll();
+            }}
+            className="min-h-12 rounded-xl border border-white/30 px-4 font-semibold"
+          >
+            Retake all
           </button>
           <a
             href={composition.objectUrl}
             download={createPhotoFilename(eventName, selectedTemplate.id)}
-            className="col-span-2 inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 font-bold text-stone-950"
+            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-4 font-bold text-stone-950"
           >
-            Download photo
+            Download strip
           </a>
           <Link
             href={`/e/${eventSlug}`}
@@ -224,10 +237,15 @@ export function FrameComposer({
   return (
     <section className="flex min-h-0 flex-1 flex-col py-3">
       <div className="mb-3 text-center">
-        <p className="text-sm font-medium text-amber-300">Choose a frame</p>
-        <h1 className="display mt-1 text-3xl">Make it yours.</h1>
+        <p className="text-sm font-medium text-amber-300">Choose a layout</p>
+        <h1 className="display mt-1 text-3xl">Build your strip.</h1>
       </div>
-      <div className="relative mx-auto aspect-[3/4] max-h-[48svh] min-h-0 w-full flex-1 overflow-hidden rounded-2xl bg-stone-900">
+      <div
+        className="relative mx-auto max-h-[42svh] min-h-48 w-full flex-1 overflow-hidden rounded-2xl bg-stone-900"
+        style={{
+          aspectRatio: `${selectedTemplate.canvas.width} / ${selectedTemplate.canvas.height}`,
+        }}
+      >
         {preview ? (
           <Image
             src={preview.objectUrl}
@@ -238,40 +256,40 @@ export function FrameComposer({
           />
         ) : (
           <div
-            className="grid h-full place-items-center px-6 text-center text-sm text-stone-300"
+            className="grid h-full place-items-center text-sm text-stone-300"
             role="status"
           >
-            Preparing your frame…
+            Preparing your layout…
           </div>
         )}
       </div>
       <fieldset className="mt-4">
-        <legend className="sr-only">Frame style</legend>
-        <div className="flex gap-3 overflow-x-auto pb-2" role="radiogroup">
-          {SYSTEM_FRAME_TEMPLATES.map((template) => {
+        <legend className="sr-only">Photo strip layout</legend>
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {BOOTH_FRAME_TEMPLATES.map((template) => {
             const selected = selectedId === template.id;
             return (
               <label
                 key={template.id}
-                className={`min-w-32 flex-1 cursor-pointer rounded-xl border p-2 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-amber-300 ${
+                className={`min-w-32 flex-1 cursor-pointer rounded-xl border p-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-amber-300 ${
                   selected
                     ? 'border-amber-300 bg-amber-300/10'
                     : 'border-white/20 bg-white/5'
                 }`}
               >
                 <input
+                  className="sr-only"
                   type="radio"
-                  name="frame-template"
-                  value={template.id}
+                  name="booth-layout"
                   checked={selected}
+                  value={template.id}
                   onChange={() => {
                     replacePreview(null);
                     setSelectedId(template.id);
                     setError(null);
                   }}
-                  className="sr-only"
                 />
-                <TemplateThumbnail template={template} />
+                <LayoutThumbnail template={template} />
                 <span className="mt-2 block text-sm font-semibold">
                   {template.name}
                 </span>
@@ -284,26 +302,26 @@ export function FrameComposer({
         </div>
       </fieldset>
       {error ? (
-        <p className="mt-2 text-center text-sm text-red-200" role="alert">
+        <p role="alert" className="mt-2 text-center text-sm text-red-200">
           {error}
         </p>
       ) : null}
       <div className="mt-3 grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={retake}
+          onClick={returnToReview}
           disabled={stage === 'composing'}
-          className="min-h-12 rounded-xl border border-white/30 px-5 font-semibold disabled:opacity-50"
+          className="min-h-12 rounded-xl border border-white/30 px-4 font-semibold disabled:opacity-50"
         >
-          Retake
+          Review photos
         </button>
         <button
           type="button"
-          onClick={() => void createComposition()}
+          onClick={() => void compose()}
           disabled={!preview || stage === 'composing'}
-          className="min-h-12 rounded-xl bg-white px-5 font-bold text-stone-950 disabled:opacity-50"
+          className="min-h-12 rounded-xl bg-white px-4 font-bold text-stone-950 disabled:opacity-50"
         >
-          {stage === 'composing' ? 'Creating…' : 'Use frame'}
+          {stage === 'composing' ? 'Creating…' : 'Use layout'}
         </button>
       </div>
     </section>
