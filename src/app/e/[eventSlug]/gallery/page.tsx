@@ -10,6 +10,9 @@ import {
 } from '@/features/media/queries';
 import { getPublicEnv } from '@/lib/env';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function GalleryPage({
   params,
   searchParams,

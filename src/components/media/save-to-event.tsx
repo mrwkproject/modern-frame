@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { MediaCaptureMode } from '@/types/database';
+import { shouldRetainFinalizeRetry } from '@/features/media/helpers';
 
 type SaveStage =
   'idle' | 'preparing' | 'uploading' | 'finishing' | 'saved' | 'error';
@@ -35,6 +36,7 @@ export function SaveToEvent({
   const [stage, setStage] = useState<SaveStage>('idle');
   const [error, setError] = useState<string | null>(null);
   const busyRef = useRef(false);
+  const pendingFinalizeRef = useRef<string | null>(null);
   const busy = ['preparing', 'uploading', 'finishing'].includes(stage);
 
   const save = async () => {
@@ -43,6 +45,23 @@ export function SaveToEvent({
     setError(null);
     setStage('preparing');
     try {
+      if (pendingFinalizeRef.current) {
+        setStage('finishing');
+        const retryResponse = await fetch(`/e/${eventSlug}/media/finalize`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ mediaId: pendingFinalizeRef.current }),
+          cache: 'no-store',
+        });
+        if (retryResponse.ok) {
+          pendingFinalizeRef.current = null;
+          setStage('saved');
+          return;
+        }
+        if (!shouldRetainFinalizeRetry(retryResponse.status))
+          pendingFinalizeRef.current = null;
+        throw new Error('FINALIZE_RETRY_FAILED');
+      }
       const intentResponse = await fetch(
         `/e/${eventSlug}/media/upload-intent`,
         {
@@ -56,6 +75,7 @@ export function SaveToEvent({
             templateId,
             mimeType: 'image/jpeg',
           }),
+          cache: 'no-store',
         },
       );
       if (!intentResponse.ok) throw new Error('INTENT_FAILED');
@@ -72,13 +92,20 @@ export function SaveToEvent({
           upsert: false,
         });
       if (uploadError) throw uploadError;
+      pendingFinalizeRef.current = intent.mediaId;
       setStage('finishing');
       const finalizeResponse = await fetch(`/e/${eventSlug}/media/finalize`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ mediaId: intent.mediaId }),
+        cache: 'no-store',
       });
-      if (!finalizeResponse.ok) throw new Error('FINALIZE_FAILED');
+      if (!finalizeResponse.ok) {
+        if (!shouldRetainFinalizeRetry(finalizeResponse.status))
+          pendingFinalizeRef.current = null;
+        throw new Error('FINALIZE_FAILED');
+      }
+      pendingFinalizeRef.current = null;
       setStage('saved');
     } catch {
       setError(

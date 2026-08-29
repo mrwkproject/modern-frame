@@ -25,7 +25,8 @@ export async function listHostEventMedia(eventId: string) {
       'id, storage_path, capture_mode, template_id, width, height, status, visibility, created_at',
     )
     .eq('event_id', eventId)
-    .neq('status', 'pending')
+    .eq('status', 'ready')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .range(0, 99);
   if (error) throw new Error('HOST_GALLERY_FAILED');

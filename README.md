@@ -54,8 +54,15 @@ Use [`.env.example`](./.env.example) as the source of required names:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY` (required by private media signing and verification on the server)
+- `ABUSE_RATE_LIMIT_SECRET` (server-only HMAC secret for opaque join rate-limit keys; minimum 32 characters)
 
 The anon key is intentionally public and constrained by RLS. A service-role key must never be prefixed with `NEXT_PUBLIC_`, imported by client code, or committed.
+
+## MVP deployment
+
+Cloudflare Workers deployment uses the official vinext path for the current Next.js 16 application. `pnpm build` remains the canonical Next.js build; `pnpm build:vinext` verifies the Workers artifact, `pnpm preview` runs it locally, and `pnpm deploy` first validates the public production environment before deploying.
+
+See `docs/deployment/cloudflare-workers.md` for Cloudflare variables/secrets and `docs/deployment/supabase-production.md` for safe migration, Auth, and private bucket verification. Run the manual flow in `docs/testing/mvp-release-checklist.md` before public traffic. Physical camera QA remains Pending.
 
 ## Supabase local development
 

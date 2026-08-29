@@ -22,7 +22,11 @@ Soft deletion exists on organizations and events because recovery/audit needs ar
 
 `event_settings` is one-to-one with an event and controls guest saves and gallery availability. Existing events are backfilled and a trigger creates defaults for every new event. `media_assets` belongs explicitly to an event and optionally retains its guest session; session deletion uses `ON DELETE SET NULL` so media ownership remains stable.
 
+Authenticated roles receive column-level settings updates only for `guest_uploads_enabled` and `gallery_enabled`. Media rows have no generic authenticated update grant. `set_event_media_visibility` and `archive_event_media` derive organization authority from `auth.uid()`. A trigger protects immutable identity fields and permits only pending→ready/failed and ready→archived transitions; archived rows must remain hidden.
+
 Generated paths are constrained to `events/{event_id}/{media_id}.jpg`. States are `pending`, `ready`, `failed`, and `archived`; only ready, visible, non-deleted rows appear to guests. Pending intents expire after 15 minutes and have a cleanup index. `create_media_upload_intent`, `resolve_media_finalize`, and `list_guest_gallery` expose narrow guest operations. Gallery pagination is stable on `(created_at, id)` and capped at 50 rows.
+
+`private.join_rate_limits` stores only an operation scope, HMAC digest, fixed-window start, and count. No client role has table access. The service-role-only `consume_join_rate_limit` function atomically applies bounded windows and thresholds.
 
 ## Planned, not yet created
 

@@ -69,7 +69,7 @@ select is_empty($$select id from public.media_assets where event_id='7b100000-00
 select lives_ok($$update public.event_settings set gallery_enabled=false where event_id='7a100000-0000-0000-0000-000000000001'$$,'Owner can manage event settings');
 select set_config('request.jwt.claim.sub','73000000-0000-0000-0000-000000000003',true);
 select is_empty($$update public.event_settings set gallery_enabled=true where event_id='7a100000-0000-0000-0000-000000000001' returning event_id$$,'Member cannot manage event settings');
-select is_empty($$update public.media_assets set visibility='hidden' where id='7a120000-0000-0000-0000-000000000001' returning id$$,'Member cannot moderate media');
+select throws_ok($$update public.media_assets set visibility='hidden' where id='7a120000-0000-0000-0000-000000000001' returning id$$,'42501','permission denied for table media_assets','Member cannot generically update media');
 
 select * from finish();
 rollback;

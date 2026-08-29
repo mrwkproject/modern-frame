@@ -6,22 +6,25 @@ import { finalizeMediaSchema } from '@/features/media/schema';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createPublicClient } from '@/lib/supabase/public';
 
+export const dynamic = 'force-dynamic';
+const privateJson = (body: object, status = 200) =>
+  NextResponse.json(body, {
+    status,
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  });
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ eventSlug: string }> },
 ) {
   const { eventSlug } = await params;
   const tokenHash = await getGuestTokenHash();
-  if (!tokenHash)
-    return NextResponse.json({ error: 'Session required.' }, { status: 401 });
+  if (!tokenHash) return privateJson({ error: 'Session required.' }, 401);
   const parsed = finalizeMediaSchema.safeParse(
     await request.json().catch(() => null),
   );
   if (!parsed.success)
-    return NextResponse.json(
-      { error: 'Invalid media reference.' },
-      { status: 400 },
-    );
+    return privateJson({ error: 'Invalid media reference.' }, 400);
 
   const publicClient = createPublicClient();
   const { data, error } = await publicClient.rpc('resolve_media_finalize', {
@@ -31,10 +34,10 @@ export async function POST(
   });
   const media = data?.[0];
   if (error || !media)
-    return NextResponse.json(
-      { error: 'Upload cannot be finalized.' },
-      { status: 403 },
-    );
+    return privateJson({ error: 'Upload cannot be finalized.' }, 403);
+
+  if (media.media_status === 'ready')
+    return privateJson({ mediaId: media.media_id, status: 'ready' });
 
   const admin = createAdminClient();
   const { data: object, error: objectError } = await admin.storage
@@ -61,10 +64,7 @@ export async function POST(
       .from('media_assets')
       .update({ status: 'failed' })
       .eq('id', media.media_id);
-    return NextResponse.json(
-      { error: 'Uploaded photo failed verification.' },
-      { status: 422 },
-    );
+    return privateJson({ error: 'Uploaded photo failed verification.' }, 422);
   }
 
   const { error: updateError } = await admin
@@ -73,9 +73,6 @@ export async function POST(
     .eq('id', media.media_id)
     .eq('status', 'pending');
   if (updateError)
-    return NextResponse.json(
-      { error: 'Could not finish saving.' },
-      { status: 503 },
-    );
-  return NextResponse.json({ mediaId: media.media_id, status: 'ready' });
+    return privateJson({ error: 'Could not finish saving.' }, 503);
+  return privateJson({ mediaId: media.media_id, status: 'ready' });
 }

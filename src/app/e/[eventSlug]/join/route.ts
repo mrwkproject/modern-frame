@@ -15,6 +15,15 @@ import {
   hashGuestToken,
 } from '@/features/guest-sessions/token';
 import { getPublicEvent } from '@/features/events/queries';
+import { trustedClientIp } from '@/features/abuse/ip';
+import { consumeJoinRateLimit } from '@/features/abuse/rate-limit';
+
+export const dynamic = 'force-dynamic';
+const privateRedirect = (url: URL) => {
+  const response = NextResponse.redirect(url);
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
+};
 
 export async function GET(
   request: NextRequest,
@@ -31,12 +40,12 @@ export async function GET(
   );
 
   if (!EVENT_SLUG_PATTERN.test(eventSlug)) {
-    return NextResponse.redirect(new URL('/not-found', request.url));
+    return privateRedirect(new URL('/not-found', request.url));
   }
 
   const event = await getPublicEvent(eventSlug);
   if (!event || event.status !== 'active') {
-    return NextResponse.redirect(new URL(eventPath, request.url));
+    return privateRedirect(new URL(eventPath, request.url));
   }
 
   const existingToken = request.cookies.get(GUEST_SESSION_COOKIE)?.value;
@@ -45,7 +54,39 @@ export async function GET(
       eventSlug,
       await hashGuestToken(existingToken),
     );
-    if (validation.valid) return NextResponse.redirect(redirectTo);
+    if (validation.valid) return privateRedirect(redirectTo);
+  }
+
+  const clientIp = trustedClientIp(request.headers);
+  if (clientIp) {
+    const limit = await consumeJoinRateLimit(eventSlug, clientIp).catch(
+      () => null,
+    );
+    if (!limit) {
+      return new NextResponse(
+        'Guest joining is temporarily unavailable. Please try again shortly.',
+        {
+          status: 503,
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+            'Content-Type': 'text/plain; charset=utf-8',
+          },
+        },
+      );
+    }
+    if (!limit.allowed) {
+      return new NextResponse(
+        'Too many join attempts. Please wait a few minutes and try again.',
+        {
+          status: 429,
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Retry-After': String(limit.retry_after_seconds),
+          },
+        },
+      );
+    }
   }
 
   const rawToken = generateGuestToken();
@@ -53,10 +94,11 @@ export async function GET(
     eventSlug,
     await hashGuestToken(rawToken),
   );
-  if (!session) return NextResponse.redirect(new URL(eventPath, request.url));
+  if (!session) return privateRedirect(new URL(eventPath, request.url));
 
   const response = NextResponse.redirect(redirectTo);
   const options = guestCookieOptions(eventSlug, new Date(session.expires_at));
   response.cookies.set(options.name, rawToken, options);
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
   return response;
 }

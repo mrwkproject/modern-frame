@@ -51,6 +51,12 @@ Three-shot mode preserves the same server authorization boundary and receives no
 
 `event-media` is a private, JPEG-only bucket with an 8 MiB limit. The service-role key is parsed lazily only by `src/lib/supabase/admin.ts`, which imports `server-only`. Guests have no direct table privileges. Their HttpOnly event cookie is hashed server-side and bound by database functions to the exact event, session, media row, and generated path.
 
+Gallery access and creator attribution are separate. A valid Event A requester may see every ready, visible, non-deleted Event A asset regardless of which Event A guest created it. The requester token cannot authorize Event B and cannot finalize media created by a different session.
+
 Finalize verifies the exact stored path, MIME, nonzero byte size, configured limit, and expected byte size before changing `pending` to `ready`; invalid objects are removed and marked failed. Host reads and moderation remain under organization RLS. Guest gallery results expose a narrow projection and are rendered through 12-minute signed URLs. Intent quotas are 10 per session per minute and 250 non-failed assets per session; Prompt 08 must add an edge-aware limiter before public traffic.
 
 Pending intents expire after 15 minutes. A future scheduled job should mark expired rows failed and remove orphaned objects; the indexed expiration field makes that bounded cleanup possible without adding a scheduler in this phase.
+
+Join creation is limited to 20 new-session attempts per 10 minutes per event and opaque IP-derived key. Cloudflare's managed `CF-Connecting-IP` header is trusted only at the selected Workers boundary; arbitrary `X-Forwarded-For` is ignored. Development bypasses this limiter rather than inventing identity. HMAC-SHA-256 uses `ABUSE_RATE_LIMIT_SECRET`, and raw IPs are never persisted.
+
+Baseline headers set `nosniff`, strict-origin referrer behavior, and `camera=(self), microphone=(), geolocation=()`. No CSP is added in this phase because an unverified policy could break Next.js, Supabase, Blob previews, or signed images. Guest joins, signed uploads, finalize responses, and both gallery surfaces are explicitly dynamic/no-store.

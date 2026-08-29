@@ -51,36 +51,22 @@ export async function setMediaVisibilityAction(
 ) {
   const context = await requireMediaManager(eventId);
   if (!context) return;
-  await context.supabase
-    .from('media_assets')
-    .update({ visibility })
-    .eq('id', mediaId)
-    .eq('event_id', eventId)
-    .eq('status', 'ready');
+  await context.supabase.rpc('set_event_media_visibility', {
+    requested_media_id: mediaId,
+    requested_visibility: visibility,
+  });
   revalidatePath(`/dashboard/events/${eventId}/gallery`);
 }
 
 export async function removeMediaAction(eventId: string, mediaId: string) {
   const context = await requireMediaManager(eventId);
   if (!context) return;
-  const { data: media } = await context.supabase
-    .from('media_assets')
-    .select('storage_path')
-    .eq('id', mediaId)
-    .eq('event_id', eventId)
-    .maybeSingle();
-  if (!media) return;
-  const { error: archivedError } = await context.supabase
-    .from('media_assets')
-    .update({
-      status: 'archived',
-      visibility: 'hidden',
-      deleted_at: new Date().toISOString(),
-    })
-    .eq('id', mediaId)
-    .eq('event_id', eventId)
-    .eq('status', 'ready');
-  if (archivedError) return;
+  const { data, error: archivedError } = await context.supabase.rpc(
+    'archive_event_media',
+    { requested_media_id: mediaId },
+  );
+  const media = data?.[0];
+  if (archivedError || !media) return;
   const admin = createAdminClient();
   await admin.storage.from(EVENT_MEDIA_BUCKET).remove([media.storage_path]);
   revalidatePath(`/dashboard/events/${eventId}/gallery`);

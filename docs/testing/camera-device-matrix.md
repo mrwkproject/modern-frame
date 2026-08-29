@@ -18,3 +18,9 @@ For every device, also verify unsupported/no-camera and camera-busy recovery whe
 ## Three-shot photobooth scenarios
 
 The following scenarios remain pending on every physical device listed above: automatic three-shot timing, front/rear switching before the sequence, shot ordering, single-shot retake, retake-all, renderer-generated layout preview, local strip download, leaving mid-countdown, leaving between shots, and confirmation that the OS camera indicator turns off. Also verify that the normal sequence requests permission once and keeps one stream active through all three shots. Automated CI does not mark any of these physical checks complete.
+
+## Prompt 08 release additions
+
+For iPhone Safari, Android Chrome, Desktop Chrome, and macOS Safari where available, also verify frame preview, local single-photo download, Save to Event, strip layout/download, shared gallery display, screen rotation, navigation cleanup, and that the camera indicator stops. Record permission allow and deny separately.
+
+Repeat Save to Event on a slow network, interrupt once during upload, and interrupt once during finalize. Retry must remain understandable, keep local download available, and avoid duplicate gallery entries after an ambiguous finalize response. All of these cases remain **Pending** until executed on physical hardware.

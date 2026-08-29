@@ -9,9 +9,11 @@
 7. Single-photo frame composition — COMPLETE
 8. Three-shot photo booth — COMPLETE
 9. Private media storage, gallery, and sharing — COMPLETE
-10. MVP deployment readiness, real-device QA, edge rate limiting, cleanup scheduling, and observability — NEXT
-11. Video booth
-12. Live wall and guestbook
-13. Multi-event SaaS, white label, printing, AI, and enterprise integrations
+10. MVP release hardening — COMPLETE
+11. Cloudflare Workers deployment configuration — READY
+12. Physical-device QA and deployment verification — PENDING
+13. Video booth — BLOCKED UNTIL QA
+14. Live wall and guestbook
+15. Multi-event SaaS, white label, printing, AI, and enterprise integrations
 
 Each phase should introduce only the schema and infrastructure needed by its verified workflow.

@@ -5,22 +5,25 @@ import { EVENT_MEDIA_BUCKET } from '@/features/media/constants';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createPublicClient } from '@/lib/supabase/public';
 
+export const dynamic = 'force-dynamic';
+const privateJson = (body: object, status = 200) =>
+  NextResponse.json(body, {
+    status,
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  });
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ eventSlug: string }> },
 ) {
   const { eventSlug } = await params;
   const tokenHash = await getGuestTokenHash();
-  if (!tokenHash)
-    return NextResponse.json({ error: 'Session required.' }, { status: 401 });
+  if (!tokenHash) return privateJson({ error: 'Session required.' }, 401);
   const parsed = uploadIntentSchema.safeParse(
     await request.json().catch(() => null),
   );
   if (!parsed.success)
-    return NextResponse.json(
-      { error: 'Invalid photo details.' },
-      { status: 400 },
-    );
+    return privateJson({ error: 'Invalid photo details.' }, 400);
 
   const supabase = createPublicClient();
   const { data, error } = await supabase.rpc('create_media_upload_intent', {
@@ -35,10 +38,7 @@ export async function POST(
   });
   const intent = data?.[0];
   if (error || !intent)
-    return NextResponse.json(
-      { error: 'Photo saving is unavailable.' },
-      { status: 403 },
-    );
+    return privateJson({ error: 'Photo saving is unavailable.' }, 403);
 
   const admin = createAdminClient();
   const { data: upload, error: uploadError } = await admin.storage
@@ -49,12 +49,9 @@ export async function POST(
       .from('media_assets')
       .update({ status: 'failed' })
       .eq('id', intent.media_id);
-    return NextResponse.json(
-      { error: 'Could not prepare the upload.' },
-      { status: 503 },
-    );
+    return privateJson({ error: 'Could not prepare the upload.' }, 503);
   }
-  return NextResponse.json({
+  return privateJson({
     mediaId: intent.media_id,
     upload: { path: upload.path, token: upload.token },
     expiresAt: intent.upload_expires_at,

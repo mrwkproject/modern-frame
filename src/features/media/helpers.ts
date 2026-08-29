@@ -58,3 +58,7 @@ export async function hasJpegMagic(blob: Blob) {
 export function mediaDownloadFilename(eventSlug: string, mode: string) {
   return `${eventSlug}-${mode === 'booth3' ? 'photo-strip' : 'framed-photo'}.jpg`;
 }
+
+export function shouldRetainFinalizeRetry(status: number) {
+  return status === 0 || status >= 500;
+}

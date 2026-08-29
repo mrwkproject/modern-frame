@@ -9,6 +9,7 @@ import {
   hasJpegMagic,
   isVerifiedJpegMetadata,
   mediaDownloadFilename,
+  shouldRetainFinalizeRetry,
 } from '@/features/media/helpers';
 import { uploadIntentSchema } from '@/features/media/schema';
 
@@ -88,5 +89,10 @@ describe('private event media helpers', () => {
     expect(mediaDownloadFilename('summer-party', 'booth3')).toBe(
       'summer-party-photo-strip.jpg',
     );
+  });
+  it('retains the same finalize target only for network and server failures', () => {
+    expect(shouldRetainFinalizeRetry(0)).toBe(true);
+    expect(shouldRetainFinalizeRetry(503)).toBe(true);
+    expect(shouldRetainFinalizeRetry(422)).toBe(false);
   });
 });

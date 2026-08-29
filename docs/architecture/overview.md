@@ -20,11 +20,15 @@ The secure capture route now resolves an allowlisted presentation mode only afte
 
 Private media uses an explicit intent → signed one-object upload → server verification flow. The admin client is server-only; browser code receives only the generated upload capability. Only completed framed JPEGs can be saved, and failed event saves never block local download. Guest and host galleries receive short-lived signed read URLs rather than public object URLs.
 
+Gallery authorization validates the requesting guest session against the event first, then independently selects every ready, visible event asset. Creator session attribution never limits same-event gallery visibility. Host moderation uses narrow database functions rather than generic table updates, and finalize is idempotent for the original event/session/media tuple.
+
+Anonymous join creation uses a provider-neutral PostgreSQL fixed-window counter. On Cloudflare, the server HMACs the trusted `CF-Connecting-IP` value with an event/scope and a server secret; PostgreSQL stores only the opaque digest. Existing valid sessions bypass new-session quota consumption.
+
 Frame photo slots carry a validated non-negative `slotIndex`. The renderer accepts an ordered capture array, rejects any missing required capture, and caches decoded sources within each render operation. Single frames resolve index 0; booth layouts resolve indices 0, 1, and 2 through the same engine. The booth holds one stream across its automatic sequence, stops after shot three, and composes only the selected layout at full resolution.
 
 ## Deployment
 
-Keep request handlers Web-standard and isolate provider APIs. Avoid long-running servers and native Node dependencies so a Cloudflare-compatible adapter can be selected when deployment is configured. Media processing should start client-side; asynchronous video/AI jobs remain future modules.
+Cloudflare Workers is configured through vinext, Cloudflare's current recommended Next.js 16 path. The normal Next.js toolchain remains available in parallel. Private/session routes explicitly opt out of caching, while the Workers CDN adapter is available only for content that is safe to cache. Media processing remains client-side; asynchronous video/AI jobs remain future modules.
 
 ## Future attachment points
 

@@ -251,6 +251,7 @@ export type Database = {
           storage_path: string;
           expected_byte_size: number;
           expected_mime_type: string;
+          media_status: MediaAssetStatus;
         }>;
       };
       list_guest_gallery: {
@@ -279,6 +280,26 @@ export type Database = {
           guest_uploads_enabled: boolean;
           gallery_enabled: boolean;
         }>;
+      };
+      set_event_media_visibility: {
+        Args: {
+          requested_media_id: string;
+          requested_visibility: MediaVisibility;
+        };
+        Returns: Array<{ media_id: string; visibility: MediaVisibility }>;
+      };
+      archive_event_media: {
+        Args: { requested_media_id: string };
+        Returns: Array<{ media_id: string; storage_path: string }>;
+      };
+      consume_join_rate_limit: {
+        Args: {
+          requested_scope: string;
+          requested_key_hash: string;
+          window_seconds?: number;
+          max_attempts?: number;
+        };
+        Returns: Array<{ allowed: boolean; retry_after_seconds: number }>;
       };
     };
     Enums: {
