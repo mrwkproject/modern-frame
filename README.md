@@ -11,8 +11,9 @@ Complete:
 - Event creation, settings, lifecycle, and tenant ownership
 - Public event pages with a safe public data projection
 - Foundation hardening, CI, and database-level RLS tests
+- Event QR access and anonymous, event-scoped guest sessions
 
-Next: QR event access and guest sessions, followed by camera capture, frames, photobooth, and gallery workflows. None of those future media workflows are implemented yet.
+Next: real guest camera capture, followed by frames, photobooth, and gallery workflows. None of those future media workflows are implemented yet.
 
 ## Stack
 
@@ -93,6 +94,8 @@ GitHub Actions repeats those checks on pushes to `main` and pull requests. A sep
 ## Security
 
 The tenant ownership chain is `user → organization membership → organization → event`. PostgreSQL RLS is authoritative; UI guards are defense in depth only. Organization creator identity and event ownership are immutable after creation. Public event pages call a narrow security-definer projection and cannot select private event rows or expose organization IDs, creator IDs, member data, or private media paths.
+
+Event QR codes contain only `/e/[eventSlug]/join`. Joining an active event creates a 256-bit random guest secret, stores only its SHA-256 hash in PostgreSQL, and places the raw value in an event-path-scoped HttpOnly cookie. Sessions expire 24 hours after a configured event end or seven days after creation when no end exists. Guest sessions collect no email, phone, IP, user-agent, location, advertising ID, or device fingerprint. Rate limiting at the join route/event boundary is required before public production launch.
 
 Secrets belong in ignored environment files. Private media, signed URLs, guest-token controls, upload validation, and rate limiting remain requirements for later phases.
 

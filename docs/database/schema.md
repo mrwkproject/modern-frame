@@ -10,6 +10,12 @@ Organization `created_by` and event `organization_id`/`created_by` are immutable
 
 Database behavior and RLS are exercised through transactional pgTAP tests in `supabase/tests/`. Run them only against the local stack with `pnpm db:test`.
 
+## Guest sessions
+
+`guest_sessions` belongs to an event and stores a unique SHA-256 token hash, minimal active/revoked status, creation/last-seen timestamps, expiration, and optional revocation time. Raw tokens are never persisted. Anonymous and authenticated roles have no direct table privileges; `create_guest_session` and `validate_guest_session` are narrow security-definer functions.
+
+Creation requires a non-deleted active event and a lowercase 64-character SHA-256 hash. Expiration is calculated in the database: event end plus 24 hours, or creation plus seven days if no end is configured. Validation also requires the event to remain active, preventing a still-present cookie from authorizing future capture after an event ends.
+
 Soft deletion exists on organizations and events because recovery/audit needs are plausible. Membership rows and profiles use hard deletion through explicit foreign-key behavior. Timestamps are maintained by triggers.
 
 ## Planned, not yet created

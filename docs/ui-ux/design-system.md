@@ -9,3 +9,5 @@ Guest views use dark, immersive, one-handed layouts with 44px-plus controls and 
 Motion for React is installed and available, but it must communicate state—countdown, shutter, progress, or layout change. Prefer `useReducedMotion` and a complete non-animated state; never delay capture or make correctness depend on animation completion. No current screen is animated merely because the dependency exists.
 
 UI UX Pro Max is installed at `.agents/skills/ui-ux-pro-max/` from `nextlevelbuilder/ui-ux-pro-max-skill`. Use its searchable guidance as a review aid after project requirements, security, accessibility, usability, performance, and this design system. Reuse internal primitives before adapting outside patterns from 21st.dev; all adopted work must use these tokens and accessibility rules.
+
+QR presentation uses an unanimated, high-contrast SVG with a full quiet zone. Copy/download controls retain 44px minimum targets, at least 8px separation, visible keyboard focus, and text feedback. Guest joining remains a server redirect with no form or technical session UI, minimizing delay after a mobile scan.

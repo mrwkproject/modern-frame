@@ -4,8 +4,8 @@
 2. Authentication and organization onboarding — COMPLETE
 3. Event creation, settings, lifecycle, and public slug — COMPLETE
 4. Foundation hardening and developer tooling — COMPLETE
-5. QR and guest sessions — NEXT
-6. Guest camera
+5. QR and guest sessions — COMPLETE
+6. Guest camera — NEXT
 7. Single-photo frame composition
 8. Three-shot photo booth
 9. Gallery and sharing

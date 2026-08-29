@@ -10,6 +10,8 @@ CI validates formatting, lint, TypeScript, unit tests, and production builds. A 
 
 `User → Organization → Event → Guest/capture/media` is the ownership chain. Events never belong directly to a user. Future capture, gallery, template, and media modules must carry an explicit event and derivable organization boundary.
 
+Anonymous guest identity begins at `/e/[eventSlug]/join`. QR codes contain that public URL only. The route creates or restores an event-scoped guest session through narrow database functions, then redirects to the public event or capture placeholder. Guests are never Supabase Auth users or organization members.
+
 ## Deployment
 
 Keep request handlers Web-standard and isolate provider APIs. Avoid long-running servers and native Node dependencies so a Cloudflare-compatible adapter can be selected when deployment is configured. Media processing should start client-side; asynchronous video/AI jobs remain future modules.

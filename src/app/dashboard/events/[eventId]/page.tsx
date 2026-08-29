@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { StatusBadge } from '@/components/events/status-badge';
+import { CopyGuestLink } from '@/components/events/copy-guest-link';
 import {
   activateEventAction,
   archiveEventAction,
@@ -15,6 +16,7 @@ import {
   getPrimaryOrganization,
 } from '@/features/organizations/queries';
 import { getPublicEnv } from '@/lib/env';
+import { guestJoinUrl } from '@/features/guest-sessions/urls';
 
 export default async function EventDetailPage({
   params,
@@ -30,6 +32,7 @@ export default async function EventDetailPage({
   if (!event) notFound();
   const canManage = canManageOrganization(organization.role);
   const publicUrl = `${getPublicEnv().NEXT_PUBLIC_SITE_URL}/e/${event.slug}`;
+  const joinUrl = guestJoinUrl(getPublicEnv().NEXT_PUBLIC_SITE_URL, event.slug);
   return (
     <div className="mx-auto max-w-6xl">
       <Link
@@ -105,6 +108,40 @@ export default async function EventDetailPage({
             unavailable until activation.
           </p>
         ) : null}
+      </section>
+      <section className="mt-8 grid gap-6 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 md:grid-cols-[16rem_1fr] md:items-center">
+        <div className="rounded-xl border border-[var(--border)] bg-white p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- authenticated SVG route has no intrinsic Next Image benefit */}
+          <img
+            src={`/dashboard/events/${event.id}/qr`}
+            width="512"
+            height="512"
+            alt={`Guest join QR code for ${event.name}`}
+            className="h-auto w-full"
+          />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[var(--accent)]">
+            Guest access
+          </p>
+          <h2 className="display mt-1 text-2xl font-semibold">Guest QR</h2>
+          <p className="mt-2 text-[var(--muted-foreground)]">
+            Scan to join this event. The QR contains only the public join URL
+            and no session secret.
+          </p>
+          <p className="mt-4 rounded-lg bg-[var(--muted)] p-3 text-sm [overflow-wrap:anywhere]">
+            {joinUrl}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <CopyGuestLink url={joinUrl} />
+            <a
+              href={`/dashboard/events/${event.id}/qr?download=1`}
+              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--primary)] px-5 text-sm font-semibold text-white"
+            >
+              Download SVG
+            </a>
+          </div>
+        </div>
       </section>
       <section
         className="mt-8 grid gap-4 sm:grid-cols-3"

@@ -50,7 +50,7 @@ export default async function GuestEventPage({ params }: Props) {
         {isActive ? (
           <div className="mx-auto mt-10 grid max-w-sm gap-3">
             <Link
-              href={`/e/${eventSlug}/capture`}
+              href={`/e/${eventSlug}/join?next=capture`}
               className="flex min-h-14 items-center justify-center rounded-xl bg-white px-5 font-bold text-stone-950"
             >
               Open camera

@@ -10,6 +10,7 @@ export type EventType =
   | 'community'
   | 'brand_activation'
   | 'other';
+export type GuestSessionStatus = 'active' | 'revoked';
 
 type ProfileRow = {
   id: string;
@@ -55,6 +56,17 @@ type EventRow = {
   deleted_at: string | null;
 };
 
+type GuestSessionRow = {
+  id: string;
+  event_id: string;
+  token_hash: string;
+  status: GuestSessionStatus;
+  created_at: string;
+  last_seen_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -92,6 +104,23 @@ export type Database = {
         >;
         Relationships: [];
       };
+      guest_sessions: {
+        Row: GuestSessionRow;
+        Insert: Pick<
+          GuestSessionRow,
+          'event_id' | 'token_hash' | 'expires_at'
+        > &
+          Partial<
+            Omit<GuestSessionRow, 'event_id' | 'token_hash' | 'expires_at'>
+          >;
+        Update: Partial<
+          Pick<
+            GuestSessionRow,
+            'status' | 'last_seen_at' | 'expires_at' | 'revoked_at'
+          >
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -111,11 +140,20 @@ export type Database = {
           >
         >;
       };
+      create_guest_session: {
+        Args: { event_slug: string; guest_token_hash: string };
+        Returns: Array<{ expires_at: string }>;
+      };
+      validate_guest_session: {
+        Args: { event_slug: string; guest_token_hash: string };
+        Returns: Array<{ valid: boolean; expires_at: string | null }>;
+      };
     };
     Enums: {
       organization_role: OrganizationRole;
       event_status: EventStatus;
       event_type: EventType;
+      guest_session_status: GuestSessionStatus;
     };
     CompositeTypes: Record<string, never>;
   };

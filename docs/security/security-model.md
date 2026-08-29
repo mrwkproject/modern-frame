@@ -32,3 +32,9 @@ Public pages use the anon client only to call `get_public_event_by_slug`. That f
 Organization creator identity is protected by `organizations_prevent_creator_change`. Membership policies were reviewed for escalation: only an organization owner can insert, update, or delete membership rows; members and admins cannot promote themselves or modify another tenant's membership. The creator trigger prevents an otherwise authorized administrator from rewriting the organization ownership identity.
 
 The pgTAP suite uses real authenticated and anonymous database roles to verify profile privacy, tenant reads, membership escalation denial, owner/admin event creation, cross-tenant event denial, organization creator immutability, anonymous table denial, and the safe public RPC. It runs against local Supabase only and never needs production credentials.
+
+## Anonymous guest sessions
+
+QR codes carry only the absolute event join URL—never IDs, credentials, storage paths, or guest secrets. The join route generates 256 bits with Web Crypto, hashes the secret with SHA-256, and sends only the hash to a narrow creation RPC. The raw secret exists only transiently on the server and in an HttpOnly, SameSite=Lax cookie scoped to `/e/[eventSlug]`; it never appears in URLs, browser storage, application logs, or PostgreSQL.
+
+Direct `guest_sessions` access is revoked from anonymous and authenticated roles. Creation and validation functions enforce active event status, non-deletion, hash format, expiration, revocation, and exact event binding. No email, phone, IP, user-agent, location, advertising ID, or persistent device fingerprint is collected. Production launch still requires rate limiting at the join route/server boundary; the narrow RPC makes that control straightforward to add without broad table access.
