@@ -6,4 +6,6 @@ Tokens live in `src/app/globals.css`: background/surface, foreground/muted, bord
 
 Guest views use dark, immersive, one-handed layouts with 44px-plus controls and safe-area padding. Host views emphasize hierarchy, navigation, and scan-friendly data. Both require semantic HTML, visible labels/focus, keyboard operation, 4.5:1 text contrast, responsive layouts at 375/390/430 and 768/1024/1440 widths, and reduced-motion support.
 
-Motion is optional and must communicate state—countdown, shutter, progress, or layout change. Never delay capture. Reuse internal primitives before adapting outside patterns from 21st.dev; all adopted work must use these tokens and accessibility rules.
+Motion for React is installed and available, but it must communicate state—countdown, shutter, progress, or layout change. Prefer `useReducedMotion` and a complete non-animated state; never delay capture or make correctness depend on animation completion. No current screen is animated merely because the dependency exists.
+
+UI UX Pro Max is installed at `.agents/skills/ui-ux-pro-max/` from `nextlevelbuilder/ui-ux-pro-max-skill`. Use its searchable guidance as a review aid after project requirements, security, accessibility, usability, performance, and this design system. Reuse internal primitives before adapting outside patterns from 21st.dev; all adopted work must use these tokens and accessibility rules.

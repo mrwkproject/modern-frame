@@ -4,3 +4,4 @@ coverage
 node_modules
 next-env.d.ts
 pnpm-lock.yaml
+.agents/skills/ui-ux-pro-max

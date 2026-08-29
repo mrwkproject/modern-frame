@@ -4,6 +4,8 @@ Modern Frame is a Next.js App Router application with two deliberately distinct 
 
 Supabase provides PostgreSQL, authentication, and private object storage. Server and browser clients have separate entry points. Database migrations are the schema source of truth, and PostgreSQL RLS is the final tenant-authorization boundary.
 
+CI validates formatting, lint, TypeScript, unit tests, and production builds. A separate local-Supabase job applies every migration and executes pgTAP policy tests. These database tests complement application tests instead of replacing them.
+
 ## Domain boundaries
 
 `User → Organization → Event → Guest/capture/media` is the ownership chain. Events never belong directly to a user. Future capture, gallery, template, and media modules must carry an explicit event and derivable organization boundary.
@@ -24,3 +26,7 @@ Keep request handlers Web-standard and isolate provider APIs. Avoid long-running
 ## Authentication boundary
 
 `src/proxy.ts` refreshes Supabase session cookies for auth and host routes. It is not an authorization boundary. Server Components protect host routes, Server Actions re-verify the authenticated user, and PostgreSQL RLS remains authoritative for tenant data. Auth and organization behavior live in their respective `src/features` domains.
+
+## Developer guidance
+
+Repository-scoped agent guidance lives in `AGENTS.md`. UI UX Pro Max is installed under `.agents/skills/ui-ux-pro-max/` with upstream attribution. It is an advisory search tool and cannot override security, accessibility, performance, product requirements, or the Modern Frame design system.

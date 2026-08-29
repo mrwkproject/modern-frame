@@ -6,6 +6,10 @@ The event-system migration adds descriptions, typed event categories, IANA timez
 
 Anonymous event access is limited to the `get_public_event_by_slug` security-definer projection. It returns only guest-safe event fields and excludes deleted or archived events; anonymous clients cannot select the underlying `events` table.
 
+Organization `created_by` and event `organization_id`/`created_by` are immutable after insertion. Dedicated `BEFORE UPDATE` triggers enforce those invariants below the application layer while leaving authorized names, settings, and soft-deletion fields editable.
+
+Database behavior and RLS are exercised through transactional pgTAP tests in `supabase/tests/`. Run them only against the local stack with `pnpm db:test`.
+
 Soft deletion exists on organizations and events because recovery/audit needs are plausible. Membership rows and profiles use hard deletion through explicit foreign-key behavior. Timestamps are maintained by triggers.
 
 ## Planned, not yet created

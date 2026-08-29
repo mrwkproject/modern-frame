@@ -8,7 +8,7 @@
 - Keep guest routes mobile-first, camera-first, fast, safe-area aware, and usable at 375/390/430px. Host routes must remain responsive through 1440px.
 - Meet accessibility fundamentals in every change: semantic HTML, labels, keyboard use, visible focus, contrast, 44px touch targets, and reduced motion.
 - Use the tokens and primitives in the existing design system. Check internal components before borrowing patterns from 21st.dev, and adapt any reference to this product.
-- If `.agents/skills/ui-ux-pro-max/` exists, use it as guidance after requirements, accessibility, usability, performance, and the project design system.
+- Use `.agents/skills/ui-ux-pro-max/` for interface work. It comes from `nextlevelbuilder/ui-ux-pro-max-skill`; its guidance remains subordinate to project requirements, security, accessibility, usability, performance, and this project's design system.
 - Use Motion only for meaningful state feedback; never let animation block capture or ignore `prefers-reduced-motion`.
 - Keep server/client boundaries explicit, validate untrusted inputs with Zod where useful, avoid `any`, and keep business logic out of route files.
 - Add proportionate unit/component tests and critical-flow integration or e2e coverage. Run lint, typecheck, tests, and production build before handoff.
