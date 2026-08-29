@@ -144,13 +144,14 @@ export default async function EventDetailPage({
         </div>
       </section>
       <section
-        className="mt-8 grid gap-4 sm:grid-cols-3"
+        className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         aria-label="Upcoming event modules"
       >
         {[
           ['Guest access', 'QR and secure guest sessions enabled'],
           ['Camera', 'Guest photo capture enabled'],
-          ['Frames & gallery', 'Coming soon'],
+          ['Photo frames', 'Three system frames available'],
+          ['Gallery', 'Coming soon'],
         ].map(([title, detail]) => (
           <article
             key={title}

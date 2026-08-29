@@ -13,8 +13,9 @@ Complete:
 - Foundation hardening, CI, and database-level RLS tests
 - Event QR access and anonymous, event-scoped guest sessions
 - Secure guest camera with local JPEG capture and preview
+- Data-driven single-photo frames with local composition and download
 
-Next: single-photo themed frame composition, followed by photobooth and gallery workflows. Upload and media storage are not implemented yet.
+Next: three-shot photobooth and multi-slot composition, followed by gallery workflows. Upload and media storage are not implemented yet.
 
 ## Stack
 
@@ -99,6 +100,8 @@ The tenant ownership chain is `user → organization membership → organization
 Event QR codes contain only `/e/[eventSlug]/join`. Joining an active event creates a 256-bit random guest secret, stores only its SHA-256 hash in PostgreSQL, and places the raw value in an event-path-scoped HttpOnly cookie. Sessions expire 24 hours after a configured event end or seven days after creation when no end exists. Guest sessions collect no email, phone, IP, user-agent, location, advertising ID, or device fingerprint. Rate limiting at the join route/event boundary is required before public production launch.
 
 The guest camera runs only after server-side event/session validation. Permission begins from an explicit guest action, requests video with `audio: false`, and releases tracks on navigation or unmount. Captured JPEGs remain in browser memory and are not uploaded or stored by Modern Frame. Phone testing requires HTTPS; localhost is accepted for development.
+
+Guests can render a captured photo through Clean Ivory, Midnight Celebration, or Warm Editorial. All templates use the same validated data model and generic Canvas renderer at an explicit 1080×1440 output size. A selected frame first renders as a lower-cost preview using identical coordinates, then exports locally as JPEG quality 0.92. Original and framed object URLs are revoked when replaced, retaken, or left.
 
 Secrets belong in ignored environment files. Private media, signed URLs, guest-token controls, upload validation, and rate limiting remain requirements for later phases.
 

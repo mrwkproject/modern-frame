@@ -42,3 +42,5 @@ Direct `guest_sessions` access is revoked from anonymous and authenticated roles
 ## Local camera privacy
 
 The server validates the active event and guest-session cookie before camera code renders. The raw guest token is read only by the Server Component and is never passed into the camera Client Component. Camera access is explicit, video-only, and local. Frames are extracted with Canvas into one in-memory JPEG Blob; no photo, Blob, EXIF, GPS, face data, camera identifier, or microphone input is sent to Modern Frame. Stream tracks, countdown timers, flash timers, and object URLs are released on replacement or teardown.
+
+Frame composition receives only the local capture, a validated built-in template, and the event display name. Event names are rendered with Canvas text APIs and never interpreted as HTML, SVG, CSS, or script. The original photo and framed JPEG remain local and are never uploaded; the renderer performs no EXIF extraction, GPS access, face processing, network request, or microphone access. Only the current original, preview, and final composition are retained, and replacement, change-frame, retake, or teardown revokes obsolete object URLs.

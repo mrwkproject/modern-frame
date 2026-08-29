@@ -38,11 +38,11 @@ export function classifyCameraError(error: unknown): CameraErrorCode {
 
 const LEGAL_TRANSITIONS: Record<CameraStatus, ReadonlyArray<CameraStatus>> = {
   idle: ['requesting', 'error'],
-  requesting: ['ready', 'error'],
+  requesting: ['ready', 'error', 'idle'],
   ready: ['requesting', 'countdown', 'error', 'idle'],
   countdown: ['countdown', 'captured', 'error', 'idle'],
-  captured: ['requesting', 'accepted', 'idle'],
-  accepted: ['requesting', 'idle'],
+  captured: ['requesting', 'frame-select', 'idle'],
+  'frame-select': ['requesting', 'idle'],
   error: ['requesting', 'idle'],
 };
 

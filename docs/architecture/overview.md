@@ -12,7 +12,9 @@ CI validates formatting, lint, TypeScript, unit tests, and production builds. A 
 
 Anonymous guest identity begins at `/e/[eventSlug]/join`. QR codes contain that public URL only. The route creates or restores an event-scoped guest session through narrow database functions, then redirects to the public event or capture placeholder. Guests are never Supabase Auth users or organization members.
 
-The capture route remains a Server Component authorization boundary and renders a focused camera Client Component only after validating the active event and event-bound guest session. `getUserMedia`, Canvas extraction, and object URLs remain browser-local. The camera leaf bundle does not import host, QR, storage, or future template code.
+The capture route remains a Server Component authorization boundary and renders a focused camera Client Component only after validating the active event and event-bound guest session. `getUserMedia`, Canvas extraction, frame composition, and object URLs remain browser-local. The camera leaf bundle does not import host, QR, or storage code.
+
+`src/features/frames` defines a validated, data-driven template contract, built-in system catalog, pure layout helpers, and one generic renderer. Templates declare explicit canvas dimensions, photo slots, ordered text, shapes, and borders. The renderer scales the same coordinates for a lightweight preview and a full 1080×1440 JPEG, so adding database-backed templates or other output ratios later does not require a renderer rewrite. No template or media database tables are introduced in this phase.
 
 ## Deployment
 
@@ -23,7 +25,7 @@ Keep request handlers Web-standard and isolate provider APIs. Avoid long-running
 - Authentication and organization onboarding: `src/features/auth`, `src/features/organizations`
 - Events and settings: `src/features/events`
 - Capture and camera adapters: `src/features/captures`
-- Declarative template renderer: `src/features/templates`
+- Declarative template renderer: `src/features/frames`
 - Media/storage and galleries: `src/features/media`, `src/features/gallery`
 - Privileged operations: server actions or route handlers with explicit authorization and audit writes
 

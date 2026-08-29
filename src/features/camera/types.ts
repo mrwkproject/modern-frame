@@ -4,7 +4,7 @@ export type CameraStatus =
   | 'ready'
   | 'countdown'
   | 'captured'
-  | 'accepted'
+  | 'frame-select'
   | 'error';
 
 export type CameraErrorCode =

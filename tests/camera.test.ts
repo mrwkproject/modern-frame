@@ -66,6 +66,16 @@ describe('camera lifecycle helpers', () => {
       error: null,
     });
     expect(
+      cameraReducer(requesting, { type: 'transition', status: 'idle' }),
+    ).toEqual(idle);
+    const frameSelect = cameraReducer(
+      { status: 'captured', countdown: null, error: null },
+      { type: 'transition', status: 'frame-select' },
+    );
+    expect(
+      cameraReducer(frameSelect, { type: 'transition', status: 'requesting' }),
+    ).toEqual(requesting);
+    expect(
       cameraReducer(idle, { type: 'transition', status: 'captured' }),
     ).toBe(idle);
   });

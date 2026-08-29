@@ -11,6 +11,7 @@ import {
   stopMediaStream,
 } from '@/features/camera/helpers';
 import type { LocalCapture } from '@/features/camera/types';
+import { FrameComposer } from '@/components/frames/frame-composer';
 
 const INITIAL_STATE = { status: 'idle', countdown: null, error: null } as const;
 
@@ -43,6 +44,7 @@ export function GuestCamera({
 
   const releaseCamera = useCallback(() => {
     requestVersionRef.current += 1;
+    operationRef.current = false;
     clearTimer();
     stopMediaStream(streamRef.current);
     streamRef.current = null;
@@ -63,9 +65,9 @@ export function GuestCamera({
         dispatch({ type: 'transition', status: 'error', error: 'unsupported' });
         return;
       }
-      operationRef.current = true;
       releaseCamera();
       const requestVersion = requestVersionRef.current;
+      operationRef.current = true;
       dispatch({ type: 'transition', status: 'requesting' });
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -85,11 +87,17 @@ export function GuestCamera({
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         }
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        setCameraCount(
-          devices.filter((device) => device.kind === 'videoinput').length,
-        );
         dispatch({ type: 'transition', status: 'ready' });
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          if (requestVersion === requestVersionRef.current) {
+            setCameraCount(
+              devices.filter((device) => device.kind === 'videoinput').length,
+            );
+          }
+        } catch {
+          if (requestVersion === requestVersionRef.current) setCameraCount(1);
+        }
       } catch (error) {
         releaseCamera();
         dispatch({
@@ -98,20 +106,27 @@ export function GuestCamera({
           error: classifyCameraError(error),
         });
       } finally {
-        operationRef.current = false;
+        if (requestVersion === requestVersionRef.current) {
+          operationRef.current = false;
+        }
       }
     },
     [facing, releaseCamera],
   );
 
+  const failCapture = useCallback(() => {
+    releaseCamera();
+    dispatch({
+      type: 'transition',
+      status: 'error',
+      error: 'capture-failed',
+    });
+  }, [releaseCamera]);
+
   const extractFrame = useCallback(() => {
     const video = videoRef.current;
     if (!video || !video.videoWidth || !video.videoHeight) {
-      dispatch({
-        type: 'transition',
-        status: 'error',
-        error: 'capture-failed',
-      });
+      failCapture();
       return;
     }
     const crop = calculateCoverCrop(video.videoWidth, video.videoHeight);
@@ -120,60 +135,56 @@ export function GuestCamera({
     canvas.height = Math.round(crop.height);
     const context = canvas.getContext('2d');
     if (!context) {
-      dispatch({
-        type: 'transition',
-        status: 'error',
-        error: 'capture-failed',
-      });
+      failCapture();
       return;
     }
-    context.drawImage(
-      video,
-      crop.x,
-      crop.y,
-      crop.width,
-      crop.height,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
-    canvas.toBlob(
-      (blob) => {
-        if (!mountedRef.current) return;
-        if (
-          !blob ||
-          blob.size === 0 ||
-          canvas.width <= 0 ||
-          canvas.height <= 0
-        ) {
-          dispatch({
-            type: 'transition',
-            status: 'error',
-            error: 'capture-failed',
+    try {
+      context.drawImage(
+        video,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      canvas.toBlob(
+        (blob) => {
+          if (!mountedRef.current) return;
+          if (
+            !blob ||
+            blob.size === 0 ||
+            canvas.width <= 0 ||
+            canvas.height <= 0
+          ) {
+            failCapture();
+            return;
+          }
+          discardCapture();
+          setCapture({
+            blob,
+            objectUrl: URL.createObjectURL(blob),
+            width: canvas.width,
+            height: canvas.height,
+            mimeType: 'image/jpeg',
           });
-          return;
-        }
-        discardCapture();
-        setCapture({
-          blob,
-          objectUrl: URL.createObjectURL(blob),
-          width: canvas.width,
-          height: canvas.height,
-          mimeType: 'image/jpeg',
-        });
-        setFlash(true);
-        flashTimerRef.current = window.setTimeout(
-          () => mountedRef.current && setFlash(false),
-          150,
-        );
-        releaseCamera();
-        dispatch({ type: 'transition', status: 'captured' });
-      },
-      'image/jpeg',
-      0.92,
-    );
-  }, [discardCapture, releaseCamera]);
+          setFlash(true);
+          flashTimerRef.current = window.setTimeout(
+            () => mountedRef.current && setFlash(false),
+            150,
+          );
+          releaseCamera();
+          dispatch({ type: 'transition', status: 'captured' });
+        },
+        'image/jpeg',
+        0.92,
+      );
+    } catch {
+      failCapture();
+    }
+  }, [discardCapture, failCapture, releaseCamera]);
 
   const beginCountdown = useCallback(() => {
     if (state.status !== 'ready') return;
@@ -198,12 +209,14 @@ export function GuestCamera({
   }, [state]);
 
   useEffect(() => {
+    mountedRef.current = true;
     const stopOnLeave = () => releaseCamera();
     window.addEventListener('pagehide', stopOnLeave);
     const onVisibility = () => {
       if (!document.hidden) return;
       releaseCamera();
       if (
+        stateRef.current.status === 'requesting' ||
         stateRef.current.status === 'ready' ||
         stateRef.current.status === 'countdown'
       ) {
@@ -225,7 +238,7 @@ export function GuestCamera({
   useEffect(() => {
     if (
       state.status === 'captured' ||
-      state.status === 'accepted' ||
+      state.status === 'frame-select' ||
       state.status === 'error'
     ) {
       statusRef.current?.focus();
@@ -233,8 +246,7 @@ export function GuestCamera({
   }, [state.status]);
 
   const errorCopy = state.error ? CAMERA_ERROR_COPY[state.error] : null;
-  const showingPhoto =
-    capture && (state.status === 'captured' || state.status === 'accepted');
+  const showingPhoto = capture && state.status === 'captured';
 
   return (
     <div className="safe-bottom mx-auto flex min-h-svh w-full max-w-2xl flex-col bg-stone-950 px-4 pt-[max(1rem,env(safe-area-inset-top))] text-white sm:px-6">
@@ -359,7 +371,7 @@ export function GuestCamera({
       {showingPhoto ? (
         <section className="flex min-h-0 flex-1 flex-col py-3">
           <h1 ref={statusRef} tabIndex={-1} className="sr-only">
-            {state.status === 'accepted' ? 'Photo ready' : 'Photo captured'}
+            Photo captured
           </h1>
           <div className="relative mx-auto aspect-[3/4] max-h-[calc(100svh-11rem)] min-h-0 w-full flex-1 overflow-hidden rounded-2xl bg-black">
             <Image
@@ -370,52 +382,38 @@ export function GuestCamera({
               className="object-cover"
             />
           </div>
-          {state.status === 'accepted' ? (
-            <div className="pt-5 text-center">
-              <h2 className="display text-3xl">Great shot.</h2>
-              <p className="mt-2 text-stone-300">
-                Your photo stays on this device. Frames are coming next.
-              </p>
-              <div className="mt-5 flex flex-wrap justify-center gap-3">
-                <button
-                  onClick={() => {
-                    discardCapture();
-                    void startCamera();
-                  }}
-                  className="min-h-12 rounded-xl border border-white/25 px-6 font-semibold"
-                >
-                  Retake
-                </button>
-                <Link
-                  href={`/e/${eventSlug}`}
-                  className="inline-flex min-h-12 items-center rounded-xl bg-white px-6 font-bold text-stone-950"
-                >
-                  Back to event
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center gap-3 pt-4">
-              <button
-                onClick={() => {
-                  discardCapture();
-                  void startCamera();
-                }}
-                className="min-h-12 flex-1 rounded-xl border border-white/25 px-5 font-semibold"
-              >
-                Retake
-              </button>
-              <button
-                onClick={() =>
-                  dispatch({ type: 'transition', status: 'accepted' })
-                }
-                className="min-h-12 flex-1 rounded-xl bg-white px-5 font-bold text-stone-950"
-              >
-                Use photo
-              </button>
-            </div>
-          )}
+          <div className="flex justify-center gap-3 pt-4">
+            <button
+              onClick={() => {
+                discardCapture();
+                void startCamera();
+              }}
+              className="min-h-12 flex-1 rounded-xl border border-white/25 px-5 font-semibold"
+            >
+              Retake
+            </button>
+            <button
+              onClick={() =>
+                dispatch({ type: 'transition', status: 'frame-select' })
+              }
+              className="min-h-12 flex-1 rounded-xl bg-white px-5 font-bold text-stone-950"
+            >
+              Use photo
+            </button>
+          </div>
         </section>
+      ) : null}
+
+      {capture && state.status === 'frame-select' ? (
+        <FrameComposer
+          capture={capture}
+          eventName={eventName}
+          eventSlug={eventSlug}
+          onRetake={() => {
+            discardCapture();
+            void startCamera();
+          }}
+        />
       ) : null}
     </div>
   );

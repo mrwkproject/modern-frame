@@ -6,8 +6,8 @@
 4. Foundation hardening and developer tooling — COMPLETE
 5. QR and guest sessions — COMPLETE
 6. Guest camera — COMPLETE
-7. Single-photo frame composition — NEXT
-8. Three-shot photo booth
+7. Single-photo frame composition — COMPLETE
+8. Three-shot photo booth — NEXT
 9. Gallery and sharing
 10. Video booth
 11. Live wall and guestbook
