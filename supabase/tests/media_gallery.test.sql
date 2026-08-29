@@ -64,7 +64,7 @@ select is_empty($$select * from public.resolve_media_finalize('media-active-b-te
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','71000000-0000-0000-0000-000000000001',true);
-select results_eq($$select event_id from public.event_settings order by event_id$$,$$values('7a100000-0000-0000-0000-000000000001'::uuid),('7a200000-0000-0000-0000-000000000002'::uuid)$$,'Host sees settings only in own tenant');
+select results_eq($$select event_id from public.event_settings order by event_id$$,$$select '7a100000-0000-0000-0000-000000000001'::uuid union all select '7a200000-0000-0000-0000-000000000002'::uuid$$,'Host sees settings only in own tenant');
 select is_empty($$select id from public.media_assets where event_id='7b100000-0000-0000-0000-000000000001'$$,'Host cannot see cross-tenant media');
 select lives_ok($$update public.event_settings set gallery_enabled=false where event_id='7a100000-0000-0000-0000-000000000001'$$,'Owner can manage event settings');
 select set_config('request.jwt.claim.sub','73000000-0000-0000-0000-000000000003',true);
