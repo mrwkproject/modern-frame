@@ -1,6 +1,6 @@
 # Cloudflare Workers deployment
 
-Modern Frame uses Cloudflare's current recommended vinext path for an existing Next.js 16 application. The official compatibility scan reports 92% compatibility: all application imports and libraries are supported; App Router strict-mode wrapping is the only partial note. The existing Next.js commands remain available alongside vinext.
+Modern Frame uses Cloudflare's current recommended vinext path for an existing Next.js 16 application. The official compatibility scan reports 97% compatibility: all application imports and libraries are supported; App Router strict-mode wrapping is the only partial note. The existing Next.js commands remain available alongside vinext.
 
 Official references:
 
