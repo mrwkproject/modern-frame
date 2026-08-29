@@ -22,3 +22,9 @@ The Next.js proxy refreshes Supabase cookies but does not grant access. Protecte
 | User forges onboarding organization/role IDs        | The form accepts no IDs or role. The server derives the user ID, and the trigger fixes the role to `owner`. |
 
 These guarantees should also be exercised against a local Supabase instance before production deployment; unit tests cover application redirect and membership decision helpers without pretending to replace database-level RLS tests.
+
+## Event authorization and public projection
+
+Host event reads require organization membership through RLS. Inserts and updates require an owner/admin role, and Server Actions derive both `organization_id` and `created_by` from the verified session rather than accepting them from forms. Queries always include the current organization ID as defense in depth. Database triggers prevent ownership changes and invalid lifecycle transitions.
+
+Public pages use the anon client only to call `get_public_event_by_slug`. That function exposes the event name, slug, description, type, schedule, timezone, and status—never organization membership, creator identity, private cover paths, or internal IDs. Archived and soft-deleted events return no result. Draft pages expose invitation details but no capture/gallery actions; those direct placeholder routes also require an active event.

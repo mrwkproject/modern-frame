@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { Wordmark } from '@/components/brand/wordmark';
 import { AccountMenu } from '@/components/account/account-menu';
 import {
@@ -39,18 +40,18 @@ export default async function DashboardLayout({
           aria-label="Host navigation"
           className="mt-8 flex gap-2 overflow-x-auto lg:flex-col"
         >
-          <a
+          <Link
             className="min-h-11 rounded-lg bg-[var(--muted)] px-4 py-3 text-sm font-semibold"
             href="/dashboard"
           >
             Overview
-          </a>
-          <a
+          </Link>
+          <Link
             className="min-h-11 rounded-lg px-4 py-3 text-sm font-medium"
             href="/dashboard/events"
           >
             Events
-          </a>
+          </Link>
         </nav>
       </aside>
       <div>

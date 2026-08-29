@@ -1,5 +1,15 @@
 export type OrganizationRole = 'owner' | 'admin' | 'member';
-export type EventStatus = 'draft' | 'published' | 'archived';
+export type EventStatus = 'draft' | 'active' | 'ended' | 'archived';
+export type EventType =
+  | 'wedding'
+  | 'birthday'
+  | 'graduation'
+  | 'corporate'
+  | 'conference'
+  | 'concert'
+  | 'community'
+  | 'brand_activation'
+  | 'other';
 
 type ProfileRow = {
   id: string;
@@ -33,6 +43,10 @@ type EventRow = {
   name: string;
   slug: string;
   status: EventStatus;
+  description: string | null;
+  event_type: EventType;
+  timezone: string;
+  cover_image_path: string | null;
   starts_at: string | null;
   ends_at: string | null;
   created_by: string;
@@ -80,10 +94,28 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_public_event_by_slug: {
+        Args: { event_slug: string };
+        Returns: Array<
+          Pick<
+            EventRow,
+            | 'slug'
+            | 'name'
+            | 'description'
+            | 'event_type'
+            | 'starts_at'
+            | 'ends_at'
+            | 'timezone'
+            | 'status'
+          >
+        >;
+      };
+    };
     Enums: {
       organization_role: OrganizationRole;
       event_status: EventStatus;
+      event_type: EventType;
     };
     CompositeTypes: Record<string, never>;
   };

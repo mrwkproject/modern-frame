@@ -1,10 +1,14 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getPublicEvent } from '@/features/events/queries';
 export default async function CapturePage({
   params,
 }: {
   params: Promise<{ eventSlug: string }>;
 }) {
   const { eventSlug } = await params;
+  const event = await getPublicEvent(eventSlug);
+  if (!event || event.status !== 'active') notFound();
   return (
     <main className="grid min-h-svh place-items-center bg-stone-950 p-5 text-center text-white">
       <div>
