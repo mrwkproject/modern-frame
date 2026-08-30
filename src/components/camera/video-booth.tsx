@@ -104,7 +104,11 @@ export function VideoBooth({
       recorder.onerror = null;
       recorder.onstop = null;
       if (recorder.state === 'recording' || recorder.state === 'paused') {
-        recorder.stop();
+        try {
+          recorder.stop();
+        } catch {
+          // A concurrent browser stop is already terminal; cleanup continues.
+        }
       }
     }
     chunksRef.current = [];
@@ -121,16 +125,24 @@ export function VideoBooth({
     [cancelRecording, discardCapture, releaseCamera],
   );
 
+  const failVideoSession = useCallback(
+    (error: VideoErrorCode) => {
+      cancelSession(false);
+      dispatch({ type: 'fail', error });
+    },
+    [cancelSession],
+  );
+
   const startCamera = useCallback(
     async (preferredFacing: 'environment' | 'user' = facing) => {
       if (operationRef.current || stateRef.current.status === 'recording')
         return;
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        dispatch({ type: 'fail', error: 'unsupported' });
+        failVideoSession('unsupported');
         return;
       }
       if (typeof MediaRecorder === 'undefined') {
-        dispatch({ type: 'fail', error: 'recorder-unsupported' });
+        failVideoSession('recorder-unsupported');
         return;
       }
       cancelSession(false);
@@ -152,13 +164,12 @@ export function VideoBooth({
         const count = await countVideoInputs();
         if (generation === generationRef.current) setCameraCount(count);
       } catch (error) {
-        releaseCamera();
-        dispatch({ type: 'fail', error: classifyCameraError(error) });
+        failVideoSession(classifyCameraError(error));
       } finally {
         if (generation === generationRef.current) operationRef.current = false;
       }
     },
-    [cancelSession, facing, releaseCamera],
+    [cancelSession, facing, failVideoSession],
   );
 
   const stopRecording = useCallback(() => {
@@ -169,14 +180,18 @@ export function VideoBooth({
     discardOnStopRef.current = false;
     clearRecordingTimers();
     dispatch({ type: 'transition', status: 'processing' });
-    recorder.stop();
-  }, [clearRecordingTimers]);
+    try {
+      recorder.stop();
+    } catch {
+      failVideoSession('recording-failed');
+    }
+  }, [clearRecordingTimers, failVideoSession]);
 
   const startRecording = useCallback(() => {
     if (stateRef.current.status !== 'ready' || operationRef.current) return;
     const stream = streamRef.current;
     if (!stream || typeof MediaRecorder === 'undefined') {
-      dispatch({ type: 'fail', error: 'recorder-unsupported' });
+      failVideoSession('recorder-unsupported');
       return;
     }
     operationRef.current = true;
@@ -200,17 +215,15 @@ export function VideoBooth({
       };
       recorder.onerror = () => {
         if (!mountedRef.current || generation !== generationRef.current) return;
-        discardOnStopRef.current = true;
-        clearRecordingTimers();
-        recorderRef.current = null;
-        operationRef.current = false;
-        releaseCamera();
-        dispatch({ type: 'fail', error: 'recording-failed' });
+        failVideoSession('recording-failed');
       };
       recorder.onstop = () => {
         recorderRef.current = null;
         operationRef.current = false;
         clearRecordingTimers();
+        recorder.ondataavailable = null;
+        recorder.onerror = null;
+        recorder.onstop = null;
         if (
           !mountedRef.current ||
           generation !== generationRef.current ||
@@ -220,15 +233,13 @@ export function VideoBooth({
           return;
         }
         if (!stopRequestedRef.current) {
-          chunksRef.current = [];
-          releaseCamera();
-          dispatch({ type: 'fail', error: 'unexpected-stop' });
+          failVideoSession('unexpected-stop');
           return;
         }
         const chunks = chunksRef.current;
         chunksRef.current = [];
         if (!chunks.length) {
-          dispatch({ type: 'fail', error: 'empty-recording' });
+          failVideoSession('empty-recording');
           return;
         }
         const actualMime =
@@ -238,7 +249,7 @@ export function VideoBooth({
           actualMime ? { type: actualMime } : undefined,
         );
         if (!blob.size || !blob.type) {
-          dispatch({ type: 'fail', error: 'empty-recording' });
+          failVideoSession('empty-recording');
           return;
         }
         discardCapture();
@@ -274,12 +285,15 @@ export function VideoBooth({
         });
       }, 250);
     } catch {
-      operationRef.current = false;
-      recorderRef.current = null;
-      chunksRef.current = [];
-      dispatch({ type: 'fail', error: 'recording-failed' });
+      failVideoSession('recording-failed');
     }
-  }, [clearRecordingTimers, discardCapture, releaseCamera, stopRecording]);
+  }, [
+    clearRecordingTimers,
+    discardCapture,
+    failVideoSession,
+    releaseCamera,
+    stopRecording,
+  ]);
 
   const retake = useCallback(() => {
     if (operationRef.current || stateRef.current.status === 'recording') return;
@@ -314,13 +328,12 @@ export function VideoBooth({
     let active = true;
     void attachCameraStream(video, stream).catch(() => {
       if (!active || !mountedRef.current) return;
-      releaseCamera();
-      dispatch({ type: 'fail', error: 'recording-failed' });
+      failVideoSession('recording-failed');
     });
     return () => {
       active = false;
     };
-  }, [releaseCamera, state.status]);
+  }, [failVideoSession, state.status]);
 
   useEffect(() => {
     mountedRef.current = true;

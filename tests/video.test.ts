@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  normalizeVideoContainerMime,
   safeVideoFilename,
   selectSupportedVideoMimeType,
   VIDEO_DURATION_SECONDS,
@@ -26,8 +27,15 @@ describe('video MIME negotiation', () => {
   });
 
   it('maps actual containers to matching extensions', () => {
+    expect(normalizeVideoContainerMime('video/mp4;codecs=avc1.42E01E')).toBe(
+      'video/mp4',
+    );
+    expect(normalizeVideoContainerMime('VIDEO/WEBM; codecs=vp8')).toBe(
+      'video/webm',
+    );
     expect(videoFileExtension('video/mp4;codecs=h264')).toBe('mp4');
     expect(videoFileExtension('video/webm;codecs=vp8')).toBe('webm');
+    expect(videoFileExtension('video/x-matroska')).toBe('video');
   });
 
   it('sanitizes event names without mislabeling the container', () => {
@@ -72,6 +80,22 @@ describe('video recording state', () => {
     expect(videoReducer(failed, { type: 'reset' })).toEqual(
       INITIAL_VIDEO_STATE,
     );
+  });
+
+  it('moves empty recordings from processing into a recoverable error', () => {
+    const processing = {
+      status: 'processing' as const,
+      remainingSeconds: VIDEO_DURATION_SECONDS,
+      error: null,
+    };
+    const failed = videoReducer(processing, {
+      type: 'fail',
+      error: 'empty-recording',
+    });
+    expect(failed).toMatchObject({
+      status: 'error',
+      error: 'empty-recording',
+    });
   });
 
   it('supports retake and identifies the URL to revoke', () => {

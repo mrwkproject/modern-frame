@@ -15,8 +15,12 @@ export function selectSupportedVideoMimeType(
   return VIDEO_MIME_CANDIDATES.find(isTypeSupported) ?? '';
 }
 
+export function normalizeVideoContainerMime(mimeType: string) {
+  return mimeType.toLowerCase().split(';', 1)[0]?.trim() ?? '';
+}
+
 export function videoFileExtension(mimeType: string) {
-  const normalized = mimeType.toLowerCase().split(';', 1)[0]?.trim();
+  const normalized = normalizeVideoContainerMime(mimeType);
   if (normalized === 'video/mp4') return 'mp4';
   if (normalized === 'video/webm') return 'webm';
   if (normalized === 'video/ogg') return 'ogv';

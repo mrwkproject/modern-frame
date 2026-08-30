@@ -13,9 +13,11 @@
 11. Cloudflare Workers deployment configuration — READY
 12. Physical-device QA and deployment verification — PENDING
 13. Video Booth Foundation (local-only, silent, eight-second recording) — COMPLETE
-14. Video Storage + Private Gallery Integration — PENDING BROWSER/DEVICE PROOF
-15. Live wall and guestbook
-16. Multi-event SaaS, white label, printing, AI, and enterprise integrations
+14. Video Booth lifecycle hardening — COMPLETE
+15. Physical-device Video Booth QA — PENDING
+16. Video Storage + Private Gallery Integration — BLOCKED BY DEVICE PROOF
+17. Live wall and guestbook
+18. Multi-event SaaS, white label, printing, AI, and enterprise integrations
 
 Each phase should introduce only the schema and infrastructure needed by its verified workflow.
 
